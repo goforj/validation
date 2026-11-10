@@ -8,6 +8,7 @@ import (
 
 // Input preserves whether JSON supplied a value, null, or no property at all.
 // Its zero value is absent; use json's omitzero option to omit absent properties.
+// Decoding T uses json.Unmarshal, so enclosing decoder options do not propagate.
 type Input[T any] struct {
 	value         T
 	present, null bool
@@ -33,7 +34,7 @@ func (i Input[T]) Get() (T, bool) { return i.value, i.present && !i.null }
 
 // UnmarshalJSON replaces the input only after a complete successful decode.
 func (i *Input[T]) UnmarshalJSON(data []byte) error {
-	if bytes.Equal(bytes.TrimSpace(data), []byte("null")) {
+	if bytes.Equal(bytes.Trim(data, " \t\r\n"), []byte("null")) {
 		*i = Null[T]()
 		return nil
 	}

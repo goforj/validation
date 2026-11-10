@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 )
@@ -114,5 +115,87 @@ func TestPresenceAndOptional(t *testing.T) {
 	op := errors.New("unavailable")
 	if err := Validate(Presence("count", Provided(1), func(v int) Field { return Value("", v).Check(func(context.Context, int) error { return op }) })); !errors.Is(err, op) {
 		t.Fatal(err)
+	}
+}
+
+// TestInputRejectsNonJSONWhitespace preserves the previous state when null has invalid surrounding bytes.
+func TestInputRejectsNonJSONWhitespace(t *testing.T) {
+	for _, data := range []string{"\vnull", "null\f", "\u00a0null", "null\u0085"} {
+		input := Provided(7)
+		if err := input.UnmarshalJSON([]byte(data)); err == nil {
+			t.Errorf("accepted malformed JSON: %q", data)
+		}
+		if value, ok := input.Get(); !ok || value != 7 {
+			t.Errorf("failed decode changed previous value: %q", data)
+		}
+	}
+}
+
+// FuzzInputJSON checks parsing validity and failed-decode atomicity against the JSON scanner.
+func FuzzInputJSON(f *testing.F) {
+	for _, value := range []string{"null", " \t\r\nnull\n", "\vnull", "null\u00a0", "0", "false", `{"name":"Ada"}`, `"text"`, "[1,null]", "1e10000", "[", ""} {
+		f.Add(value)
+	}
+	f.Fuzz(func(t *testing.T, data string) {
+		previous := json.RawMessage(`"previous"`)
+		input := Provided(previous)
+		err := input.UnmarshalJSON([]byte(data))
+		if (err == nil) != json.Valid([]byte(data)) {
+			t.Fatalf("JSON validity differs for %q: %v", data, err)
+		}
+		if err != nil {
+			if value, ok := input.Get(); !ok || string(value) != string(previous) {
+				t.Fatal("failed decode replaced the previous value")
+			}
+			return
+		}
+		if !input.IsPresent() {
+			t.Fatal("successful decode lost presence")
+		}
+		encoded, err := input.MarshalJSON()
+		if err != nil || !json.Valid(encoded) {
+			t.Fatalf("successful decode did not marshal valid JSON: %s, %v", encoded, err)
+		}
+	})
+}
+
+// TestInputDecoderBoundaries documents typed precision and the scope of enclosing decoder options.
+func TestInputDecoderBoundaries(t *testing.T) {
+	var request struct {
+		Payload Input[struct {
+			Count uint64 `json:"count"`
+		}] `json:"payload"`
+		Plain   any        `json:"plain"`
+		Wrapped Input[any] `json:"wrapped"`
+	}
+	decoder := json.NewDecoder(strings.NewReader(`{"payload":{"count":18446744073709551615,"unknown":true},"plain":7,"wrapped":7}`))
+	decoder.DisallowUnknownFields()
+	decoder.UseNumber()
+	if err := decoder.Decode(&request); err != nil {
+		t.Fatal(err)
+	}
+	payload, ok := request.Payload.Get()
+	if !ok || payload.Count != ^uint64(0) {
+		t.Fatal("typed integer precision changed")
+	}
+	if _, ok := request.Plain.(json.Number); !ok {
+		t.Fatal("enclosing decoder lost UseNumber")
+	}
+	wrapped, ok := request.Wrapped.Get()
+	if _, number := wrapped.(float64); !ok || !number {
+		t.Fatal("Input no longer follows json.Unmarshal defaults")
+	}
+}
+
+// TestTimeEqualityRedactsExpectedInstant keeps equality targets private like string and numeric equality.
+func TestTimeEqualityRedactsExpectedInstant(t *testing.T) {
+	expected := time.Date(1980, 1, 2, 3, 4, 5, 0, time.UTC)
+	var failures *Errors
+	if err := Validate(Time("confirmed_at", expected.Add(time.Second)).Equal(expected)); !errors.As(err, &failures) {
+		t.Fatal(err)
+	}
+	issue := failures.Issues()[0]
+	if issue.Code != "equal" || issue.Parameters != nil {
+		t.Fatalf("equality retained expected instant: %+v", issue)
 	}
 }

@@ -61,9 +61,9 @@ func (b TimeField) Max(max time.Time) TimeField {
 	return b.compare("max", "must be on or before the specified time", max, func(v, bound time.Time) bool { return !v.After(bound) })
 }
 
-// Equal requires the same instant, regardless of location.
+// Equal requires the same instant without exposing the expected value in failures.
 func (b TimeField) Equal(other time.Time) TimeField {
-	return b.compare("equal", "must match the expected time", other, time.Time.Equal)
+	return b.Using(constraint("equal", "must match the expected time", nil, func(value time.Time) bool { return value.Equal(other) }))
 }
 
 // evaluate forwards the typed chain to the shared execution contract.
