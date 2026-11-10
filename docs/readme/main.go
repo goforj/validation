@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -39,7 +40,7 @@ var sections = []section{
 	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}, ""},
 	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}, ""},
 	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}, ""},
-	{"Exact decimals", []string{"Decimal", "MaxScale"}, "decimal", []string{"decimal_types", "decimal"}, ""},
+	{"Exact decimals", []string{"Decimal", "MaxScale"}, "decimal", []string{"decimal"}, ""},
 	{"Currencies", []string{"Currency", "USD", "EUR", "GBP"}, "currency", []string{"currency"}, ""},
 }
 
@@ -127,6 +128,9 @@ func render(root string, entries []section) (string, error) {
 			return "", fmt.Errorf("missing GoDoc description %s", description)
 		}
 		fmt.Fprintf(&examples, "### %s\n\n%s\n\n```go\n%s```\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[description]), code.String())
+		if entry.program == "currency" {
+			examples.WriteString("See the [complete currency selector list](#currency-selectors).\n\n")
+		}
 		if !programs[entry.program] {
 			sources = append(sources, fmt.Sprintf("[%s](%s)", entry.program, path))
 			programs[entry.program] = true
@@ -135,9 +139,14 @@ func render(root string, entries []section) (string, error) {
 			quickstart = code.String()
 		}
 	}
+	currencies, err := currencySelectors(symbols)
+	if err != nil {
+		return "", err
+	}
 	replacements := []struct{ key, value string }{
 		{"{{QUICKSTART}}", quickstart}, {"{{INDEX}}", index.String()},
 		{"{{EXAMPLES}}", examples.String()}, {"{{SOURCES}}", strings.Join(sources, " · ") + "\n"},
+		{"{{CURRENCIES}}", currencies},
 	}
 	output := string(template)
 	for _, replacement := range replacements {
@@ -253,4 +262,35 @@ func calls(code string) (map[string]bool, error) {
 		return true
 	})
 	return result, nil
+}
+
+// currencySelectors projects the generated fluent API without maintaining a second code list.
+func currencySelectors(symbols map[string]string) (string, error) {
+	var codes []string
+	for name := range symbols {
+		code, ok := strings.CutPrefix(name, "CurrencyField.")
+		if ok && len(code) == 3 && code == strings.ToUpper(code) {
+			codes = append(codes, code)
+		}
+	}
+	if len(codes) == 0 {
+		return "", fmt.Errorf("missing currency selector documentation")
+	}
+	sort.Strings(codes)
+	groups := make(map[string][]string)
+	var initials []string
+	for _, code := range codes {
+		initial := code[:1]
+		if len(groups[initial]) == 0 {
+			initials = append(initials, initial)
+		}
+		groups[initial] = append(groups[initial], "`."+code+"()`")
+	}
+	var output strings.Builder
+	fmt.Fprintf(&output, "<details>\n<summary>All %d currency selectors</summary>\n\n| Initial | Selectors |\n| :--- | :--- |\n", len(codes))
+	for _, initial := range initials {
+		fmt.Fprintf(&output, "| %s | %s |\n", initial, strings.Join(groups[initial], " · "))
+	}
+	output.WriteString("\n</details>\n")
+	return output.String(), nil
 }

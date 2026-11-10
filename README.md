@@ -689,24 +689,18 @@ Decimal starts a deferred chain for signed decimal text without exponent notatio
 Values require ASCII integer digits and may include a fractional part with digits after the point.
 
 ```go
-// Invoice preserves decimal text and a typed currency code after application decoding.
-type Invoice struct {
-	Amount   json.Number
-	Currency validation.CurrencyCode
-}
-
-invoice := Invoice{Amount: json.Number("1234.50"), Currency: validation.USD}
-fmt.Println(validation.Validate(
-	validation.Decimal("amount", invoice.Amount).
-		Required().Min("0.01").Max("999999.99").MaxScale(2),
-	validation.Currency("currency", invoice.Currency).USD().EUR(),
-))
-// <nil>
-fmt.Println(validation.Validate(
-	validation.Decimal("amount", "9007199254740993.01").
-		GreaterThan("9007199254740993").LessThan("9007199254740994").
-		Equal("9007199254740993.010"),
-))
+err := validation.Validate(
+	validation.Decimal("amount", request.Amount).
+		Required().
+		Min("0.01").
+		Max("999999.99").
+		MaxScale(2),
+	validation.Currency("currency", request.Currency).
+		Required().
+		USD().
+		EUR(),
+)
+fmt.Println(err)
 // <nil>
 
 ```
@@ -727,19 +721,60 @@ Currency starts a deferred currency allowlist, configured with selectors such as
 Select at least one currency before validation; string and defined-string inputs are supported.
 
 ```go
-var request struct {
-	Currency validation.CurrencyCode `json:"currency"`
-}
-fmt.Println(json.Unmarshal([]byte(`{"currency":"EUR"}`), &request))
-// <nil>
-fmt.Println(validation.Validate(
+err := validation.Validate(
 	validation.Currency("currency", request.Currency).
-		Required().USD().EUR().GBP(),
-))
+		Required().
+		USD().
+		EUR().
+		GBP(),
+)
+fmt.Println(err)
 // <nil>
 
 ```
 
+See the [complete currency selector list](#currency-selectors).
+
+
+<a id="currency-selectors"></a>
+
+## Currency selectors
+
+Each method adds an accepted currency to the same allowlist.
+
+<details>
+<summary>All 178 currency selectors</summary>
+
+| Initial | Selectors |
+| :--- | :--- |
+| A | `.AED()` · `.AFN()` · `.ALL()` · `.AMD()` · `.AOA()` · `.ARS()` · `.AUD()` · `.AWG()` · `.AZN()` |
+| B | `.BAM()` · `.BBD()` · `.BDT()` · `.BHD()` · `.BIF()` · `.BMD()` · `.BND()` · `.BOB()` · `.BOV()` · `.BRL()` · `.BSD()` · `.BTN()` · `.BWP()` · `.BYN()` · `.BZD()` |
+| C | `.CAD()` · `.CDF()` · `.CHE()` · `.CHF()` · `.CHW()` · `.CLF()` · `.CLP()` · `.CNY()` · `.COP()` · `.COU()` · `.CRC()` · `.CUP()` · `.CVE()` · `.CZK()` |
+| D | `.DJF()` · `.DKK()` · `.DOP()` · `.DZD()` |
+| E | `.EGP()` · `.ERN()` · `.ETB()` · `.EUR()` |
+| F | `.FJD()` · `.FKP()` |
+| G | `.GBP()` · `.GEL()` · `.GHS()` · `.GIP()` · `.GMD()` · `.GNF()` · `.GTQ()` · `.GYD()` |
+| H | `.HKD()` · `.HNL()` · `.HTG()` · `.HUF()` |
+| I | `.IDR()` · `.ILS()` · `.INR()` · `.IQD()` · `.IRR()` · `.ISK()` |
+| J | `.JMD()` · `.JOD()` · `.JPY()` |
+| K | `.KES()` · `.KGS()` · `.KHR()` · `.KMF()` · `.KPW()` · `.KRW()` · `.KWD()` · `.KYD()` · `.KZT()` |
+| L | `.LAK()` · `.LBP()` · `.LKR()` · `.LRD()` · `.LSL()` · `.LYD()` |
+| M | `.MAD()` · `.MDL()` · `.MGA()` · `.MKD()` · `.MMK()` · `.MNT()` · `.MOP()` · `.MRU()` · `.MUR()` · `.MVR()` · `.MWK()` · `.MXN()` · `.MXV()` · `.MYR()` · `.MZN()` |
+| N | `.NAD()` · `.NGN()` · `.NIO()` · `.NOK()` · `.NPR()` · `.NZD()` |
+| O | `.OMR()` |
+| P | `.PAB()` · `.PEN()` · `.PGK()` · `.PHP()` · `.PKR()` · `.PLN()` · `.PYG()` |
+| Q | `.QAR()` |
+| R | `.RON()` · `.RSD()` · `.RUB()` · `.RWF()` |
+| S | `.SAR()` · `.SBD()` · `.SCR()` · `.SDG()` · `.SEK()` · `.SGD()` · `.SHP()` · `.SLE()` · `.SOS()` · `.SRD()` · `.SSP()` · `.STN()` · `.SVC()` · `.SYP()` · `.SZL()` |
+| T | `.THB()` · `.TJS()` · `.TMT()` · `.TND()` · `.TOP()` · `.TRY()` · `.TTD()` · `.TWD()` · `.TZS()` |
+| U | `.UAH()` · `.UGX()` · `.USD()` · `.USN()` · `.UYI()` · `.UYU()` · `.UYW()` · `.UZS()` |
+| V | `.VED()` · `.VES()` · `.VND()` · `.VUV()` |
+| W | `.WST()` |
+| X | `.XAD()` · `.XAF()` · `.XAG()` · `.XAU()` · `.XBA()` · `.XBB()` · `.XBC()` · `.XBD()` · `.XCD()` · `.XCG()` · `.XDR()` · `.XOF()` · `.XPD()` · `.XPF()` · `.XPT()` · `.XSU()` · `.XTS()` · `.XUA()` · `.XXX()` |
+| Y | `.YER()` |
+| Z | `.ZAR()` · `.ZMW()` · `.ZWG()` |
+
+</details>
 
 ## Development
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -90,7 +91,7 @@ func TestGenerate(t *testing.T) {
 
 // TestSourceErrors protects generation from missing and malformed authoritative inputs.
 func TestSourceErrors(t *testing.T) {
-	for _, name := range []string{"root", "source", "template", "program", "snippet", "syntax", "symbol", "description", "demonstration", "duplicate", "marker", "write"} {
+	for _, name := range []string{"root", "source", "template", "program", "snippet", "syntax", "symbol", "currency_list", "description", "demonstration", "duplicate", "marker", "write"} {
 		t.Run(name, func(t *testing.T) {
 			root := fixture(t)
 			entries := sections
@@ -111,6 +112,9 @@ func TestSourceErrors(t *testing.T) {
 				write(t, filepath.Join(root, "examples", "quickstart", "main.go"), "// snippet:quickstart\n???\n// endsnippet:quickstart\n")
 			case "symbol":
 				entries = []section{{"Values", []string{"Missing"}, "quickstart", []string{"quickstart"}, ""}}
+			case "currency_list":
+				write(t, filepath.Join(root, "currency_codes.go"), "package validation\n")
+				entries = sections[:1]
 			case "description":
 				entries = []section{{"Values", []string{"String"}, "quickstart", []string{"quickstart"}, "Missing.Method"}}
 			case "demonstration":
@@ -196,5 +200,49 @@ func TestReceiverDocumentation(t *testing.T) {
 	description, _, _ := strings.Cut(after, "```go")
 	if !strings.Contains(description, symbols["StringField.Required"]) || strings.Contains(description, "zero time") {
 		t.Fatal(description)
+	}
+}
+
+// TestCurrencySelectorList verifies deterministic grouping and complete projection of the pinned identifiers.
+func TestCurrencySelectorList(t *testing.T) {
+	sample := map[string]string{"CurrencyField.USD": "USD", "CurrencyField.UGX": "UGX", "CurrencyField.EUR": "EUR", "CurrencyField.Min": "Min", "StringField.GBP": "GBP"}
+	output, err := currencySelectors(sample)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(output, "All 3 currency selectors") || !strings.Contains(output, "| U | `.UGX()` · `.USD()` |") || strings.Contains(output, "GBP") || strings.Contains(output, "Min") {
+		t.Fatal(output)
+	}
+	if strings.Index(output, "| E |") > strings.Index(output, "| U |") {
+		t.Fatal("currency groups are not sorted")
+	}
+	if _, err := currencySelectors(nil); err == nil {
+		t.Fatal("empty currency API accepted")
+	}
+	symbols, err := readSymbols("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err = currencySelectors(symbols)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source, err := os.ReadFile("../../testdata/currency-codes.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	count := 0
+	for _, line := range strings.Split(string(source), "\n") {
+		code := strings.TrimSpace(line)
+		if code == "" || strings.HasPrefix(code, "#") {
+			continue
+		}
+		count++
+		if strings.Count(output, "`."+code+"()`") != 1 {
+			t.Errorf("selector %s missing or repeated", code)
+		}
+	}
+	if !strings.Contains(output, fmt.Sprintf("All %d currency selectors", count)) {
+		t.Fatal("currency count differs from pinned source")
 	}
 }

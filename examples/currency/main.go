@@ -1,28 +1,29 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/goforj/validation"
 )
 
-// main decodes a typed currency code and configures one fluent allowlist.
+// main validates the accepted currencies of a decoded request.
 func main() {
+	request := struct {
+		Currency validation.CurrencyCode
+	}{Currency: validation.EUR}
+
 	// snippet:currency
-	var request struct {
-		Currency validation.CurrencyCode `json:"currency"`
-	}
-	fmt.Println(json.Unmarshal([]byte(`{"currency":"EUR"}`), &request))
-	// <nil>
-	fmt.Println(validation.Validate(
+	err := validation.Validate(
 		validation.Currency("currency", request.Currency).
-			Required().USD().EUR().GBP(),
-	))
+			Required().
+			USD().
+			EUR().
+			GBP(),
+	)
+	fmt.Println(err)
 	// <nil>
 	// endsnippet:currency
 }
 
 // Output:
-// <nil>
 // <nil>
