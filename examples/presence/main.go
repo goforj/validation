@@ -17,7 +17,9 @@ func main() {
 	fmt.Println(json.Unmarshal([]byte(`{"seats":0,"name":null}`), &patch))
 	// <nil>
 	fmt.Println(validation.Validate(
-		validation.Presence("seats", patch.Seats, func(v int) validation.Field { return validation.Number("", v).Min(0) }).Required(),
+		validation.Presence("seats", patch.Seats, func(v int) validation.Field {
+			return validation.Number("", v).Min(0)
+		}).Required(),
 		validation.Presence("name", patch.Name, nonBlank).Nullable(),
 	))
 	// <nil>
@@ -30,7 +32,10 @@ func main() {
 	fmt.Println(validation.Validate(validation.Optional(nickname, nonBlank)))
 	// <nil>
 	name := "Ada"
-	fmt.Println(validation.Validate(validation.Optional(&name, nonBlank), validation.Presence("name", validation.Provided(name), nonBlank)))
+	fmt.Println(validation.Validate(
+		validation.Optional(&name, nonBlank),
+		validation.Presence("name", validation.Provided(name), nonBlank),
+	))
 	// <nil>
 	// endsnippet:presence
 }

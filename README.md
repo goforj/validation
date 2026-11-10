@@ -526,7 +526,9 @@ var patch struct {
 fmt.Println(json.Unmarshal([]byte(`{"seats":0,"name":null}`), &patch))
 // <nil>
 fmt.Println(validation.Validate(
-	validation.Presence("seats", patch.Seats, func(v int) validation.Field { return validation.Number("", v).Min(0) }).Required(),
+	validation.Presence("seats", patch.Seats, func(v int) validation.Field {
+		return validation.Number("", v).Min(0)
+	}).Required(),
 	validation.Presence("name", patch.Name, nonBlank).Nullable(),
 ))
 // <nil>
@@ -539,7 +541,10 @@ var nickname *string
 fmt.Println(validation.Validate(validation.Optional(nickname, nonBlank)))
 // <nil>
 name := "Ada"
-fmt.Println(validation.Validate(validation.Optional(&name, nonBlank), validation.Presence("name", validation.Provided(name), nonBlank)))
+fmt.Println(validation.Validate(
+	validation.Optional(&name, nonBlank),
+	validation.Presence("name", validation.Provided(name), nonBlank),
+))
 // <nil>
 
 ```
@@ -621,9 +626,16 @@ endsZ := validation.ContextRuleFunc[string](func(_ context.Context, v string) er
 	}
 	return validation.Invalid("ends_z", "Must end with Z")
 })
-fmt.Println(validation.Validate(validation.String("code", "ABC").Using(validation.All(validation.Any[string](startsA, endsZ), validation.Not[string](endsZ)))))
+fmt.Println(validation.Validate(
+	validation.String("code", "ABC").Using(validation.All(
+		validation.Any[string](startsA, endsZ),
+		validation.Not[string](endsZ),
+	)),
+))
 // <nil>
-fmt.Println(validation.Validate(validation.String("code", "XYZ").Using(validation.Any[string](startsA, endsZ))))
+fmt.Println(validation.Validate(
+	validation.String("code", "XYZ").Using(validation.Any[string](startsA, endsZ)),
+))
 // <nil>
 
 ```
@@ -643,14 +655,22 @@ fmt.Println(validation.Validate(validation.String("code", "XYZ").Using(validatio
 New creates a validator with first-violation-per-field collection and default messages.
 
 ```go
-validator := validation.New().CollectAll().FormatMessages(func(issue validation.Issue) string { return issue.Path + ": " + issue.Code })
+validator := validation.New().CollectAll().FormatMessages(func(issue validation.Issue) string {
+	return issue.Path + ": " + issue.Code
+})
 var failures *validation.Errors
-if err := validator.Validate(validation.String("name", "a").Min(3).Contains("z")); errors.As(err, &failures) {
+if err := validator.Validate(
+	validation.String("name", "a").Min(3).Contains("z"),
+); errors.As(err, &failures) {
 	fmt.Println(failures.Messages()["name"])
 	// [name: min name: contains]
 }
 first := validator.StopOnFirstError()
-fmt.Println(first.ValidateContext(context.Background(), validation.String("name", "").Required(), validation.Number("age", 0).Min(18)))
+fmt.Println(first.ValidateContext(
+	context.Background(),
+	validation.String("name", "").Required(),
+	validation.Number("age", 0).Min(18),
+))
 // name: required
 
 ```
