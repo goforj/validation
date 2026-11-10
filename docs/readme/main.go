@@ -67,7 +67,8 @@ func render(root string, entries []section) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	var index, examples, sources strings.Builder
+	var index, examples strings.Builder
+	var sources []string
 	index.WriteString("| Group | Functions |\n| ---: | :--- |\n")
 	lastGroup := ""
 	seen := make(map[string]bool)
@@ -125,7 +126,7 @@ func render(root string, entries []section) (string, error) {
 		}
 		fmt.Fprintf(&examples, "### %s\n\n%s\n\n```go\n%s```\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[description]), code.String())
 		if !programs[entry.program] {
-			fmt.Fprintf(&sources, "- [%s](%s)\n", entry.program, path)
+			sources = append(sources, fmt.Sprintf("[%s](%s)", entry.program, path))
 			programs[entry.program] = true
 		}
 		if entry.program == "quickstart" {
@@ -134,7 +135,7 @@ func render(root string, entries []section) (string, error) {
 	}
 	replacements := []struct{ key, value string }{
 		{"{{QUICKSTART}}", quickstart}, {"{{INDEX}}", index.String()},
-		{"{{EXAMPLES}}", examples.String()}, {"{{SOURCES}}", sources.String()},
+		{"{{EXAMPLES}}", examples.String()}, {"{{SOURCES}}", strings.Join(sources, " · ") + "\n"},
 	}
 	output := string(template)
 	for _, replacement := range replacements {

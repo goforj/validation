@@ -66,30 +66,9 @@ See [validation contracts](docs/contracts.md) for presence, formats, paths, conf
 
 ## Runnable examples
 
-Run these from the repository root. Tests execute every program and check its output.
+Run from the repository root with `go run ./examples/<name>`. Tests verify every program's output.
 
-```sh
-go run ./examples/custom
-go run ./examples/nested
-go run ./examples/patch
-```
-
-Complete programs:
-
-- [quickstart](examples/quickstart/main.go)
-- [formats](examples/formats/main.go)
-- [patch](examples/patch/main.go)
-- [nested](examples/nested/main.go)
-- [custom](examples/custom/main.go)
-- [context](examples/context/main.go)
-- [domain](examples/domain/main.go)
-- [errors](examples/errors/main.go)
-- [constraints](examples/constraints/main.go)
-- [advanced](examples/advanced/main.go)
-- [time](examples/time/main.go)
-- [presence](examples/presence/main.go)
-- [moreformats](examples/moreformats/main.go)
-- [policies](examples/policies/main.go)
+[quickstart](examples/quickstart/main.go) · [formats](examples/formats/main.go) · [patch](examples/patch/main.go) · [nested](examples/nested/main.go) · [custom](examples/custom/main.go) · [context](examples/context/main.go) · [domain](examples/domain/main.go) · [errors](examples/errors/main.go) · [constraints](examples/constraints/main.go) · [advanced](examples/advanced/main.go) · [time](examples/time/main.go) · [presence](examples/presence/main.go) · [moreformats](examples/moreformats/main.go) · [policies](examples/policies/main.go)
 
 ## API index
 
