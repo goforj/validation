@@ -412,3 +412,17 @@ func TestNestedCancellation(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestJoinedErrors prevents a client failure from masking an unavailable dependency.
+func TestJoinedErrors(t *testing.T) {
+	unavailable := errors.New("directory unavailable")
+	joined := fmt.Errorf("lookup: %w", errors.Join(Invalid("domain", "Unsupported domain."), unavailable))
+	err := Validate(String("email", "ada@example.com").Using(RuleFunc[string](func(string) error { return joined })))
+	var failures *Errors
+	if !errors.Is(err, unavailable) || errors.As(err, &failures) {
+		t.Fatal(err)
+	}
+	failureAt(t, String("email", "ada@example.com").Using(RuleFunc[string](func(string) error {
+		return errors.Join(Invalid("first", "First failure."), Invalid("second", "Second failure."))
+	})), "first")
+}

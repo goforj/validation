@@ -157,8 +157,8 @@ func (f field[T]) run(ctx context.Context, prefix []string, issues *[]Issue) (bo
 			if err == nil {
 				continue
 			}
-			var failure *Violation
-			if !errors.As(err, &failure) {
+			failure := ruleViolation(err)
+			if failure == nil {
 				return false, err
 			}
 			label := f.label
@@ -174,6 +174,30 @@ func (f field[T]) run(ctx context.Context, prefix []string, issues *[]Issue) (bo
 		}
 	}
 	return true, nil
+}
+
+// ruleViolation preserves operational errors even when joined with input failures.
+func ruleViolation(err error) *Violation {
+	switch wrapped := err.(type) {
+	case interface{ Unwrap() []error }:
+		var first *Violation
+		for _, child := range wrapped.Unwrap() {
+			failure := ruleViolation(child)
+			if failure == nil {
+				return nil
+			}
+			if first == nil {
+				first = failure
+			}
+		}
+		return first
+	case interface{ Unwrap() error }:
+		return ruleViolation(wrapped.Unwrap())
+	default:
+		var failure *Violation
+		errors.As(err, &failure)
+		return failure
+	}
 }
 
 // constraint creates a deferred built-in check with safe, value-free failure details.
