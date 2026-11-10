@@ -11,7 +11,7 @@ import (
 func main() {
 	// snippet:errors
 	err := validation.Validate(
-		validation.String("email", "bad").Label("email address").Email().
+		validation.String("email", "bad").Label("email address").IsEmail().
 			Message("Enter your work email address."),
 	)
 	var failures *validation.Errors

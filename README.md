@@ -21,7 +21,7 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 | :--- | :--- |
 | <img src="docs/assets/check.svg" width="22" height="22" alt=""> Typed chains | String, number, boolean, slice, and domain-value builders expose relevant operations. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt=""> Reusable rules | Plug in custom validator types or functions without global registration. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Format catalog | Reuse email, URL, UUID, IP, JSON, and Base64 checks through the is package. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Format checks | Check email, URL, UUID, IP, JSON, and Base64 directly in the fluent chain. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt=""> Field errors | Ordered paths, stable codes, custom messages, and separate operational errors. |
 
 ## Quick start
@@ -45,7 +45,7 @@ req := Registration{
 }
 err := validation.Validate(
 	validation.String("name", req.Name).Required().Min(2).Max(100),
-	validation.String("email", req.Email).Required().Email(),
+	validation.String("email", req.Email).Required().IsEmail(),
 	validation.Number("age", req.Age).Min(18),
 	validation.Bool("terms", req.Terms).Accepted(),
 )
@@ -90,7 +90,7 @@ Complete programs:
 | Group | Functions |
 | ---: | :--- |
 | **Values** | [String](#string) · [Number](#number) · [Bool](#bool) · [Validate](#validate) |
-| **Formats** | [Is](#is) · [is.Email](#is-email) |
+| **Formats** | [IsEmail](#isemail) · [IsURL](#isurl) · [IsUUID](#isuuid) · [IsUUIDv4](#isuuidv4) · [IsUUIDv7](#isuuidv7) · [IsIP](#isip) · [IsIPv4](#isipv4) · [IsIPv6](#isipv6) · [IsJSON](#isjson) · [IsBase64](#isbase64) |
 | **Conditions** | [When](#when) |
 | **Collections** | [Group](#group) · [Slice](#slice) · [Each](#each) |
 | **Custom rules** | [Using](#using) · [Invalid](#invalid) |
@@ -122,7 +122,7 @@ req := Registration{
 }
 err := validation.Validate(
 	validation.String("name", req.Name).Required().Min(2).Max(100),
-	validation.String("email", req.Email).Required().Email(),
+	validation.String("email", req.Email).Required().IsEmail(),
 	validation.Number("age", req.Age).Min(18),
 	validation.Bool("terms", req.Terms).Accepted(),
 )
@@ -133,23 +133,44 @@ fmt.Println(err)
 
 ## Formats
 
-<a id="is"></a>
+<a id="isemail"></a>
 
-<a id="is-email"></a>
+<a id="isurl"></a>
 
-### Is · is.Email
+<a id="isuuid"></a>
 
-Is attaches a string-format rule, including to a defined string type.
+<a id="isuuidv4"></a>
+
+<a id="isuuidv7"></a>
+
+<a id="isip"></a>
+
+<a id="isipv4"></a>
+
+<a id="isipv6"></a>
+
+<a id="isjson"></a>
+
+<a id="isbase64"></a>
+
+### IsEmail · IsURL · IsUUID · IsUUIDv4 · IsUUIDv7 · IsIP · IsIPv4 · IsIPv6 · IsJSON · IsBase64
+
+IsEmail requires a bare ASCII mailbox with a dotted domain.
 
 ```go
 err := validation.Validate(
-	validation.String("request_id", "0190bde7-5ad0-7000-8000-000000000001").Is(is.UUIDv7),
-	validation.String("ip", "192.0.2.1").Is(is.IPv4),
-	validation.String("metadata", `{"source":"web"}`).Is(is.JSON),
+	validation.String("email", "ada@example.com").IsEmail(),
+	validation.String("site", "https://goforj.dev").IsURL(),
+	validation.String("id", "550e8400-e29b-41d4-a716-446655440000").IsUUID(),
+	validation.String("trace_id", "550e8400-e29b-41d4-a716-446655440000").IsUUIDv4(),
+	validation.String("request_id", "0190bde7-5ad0-7000-8000-000000000001").IsUUIDv7(),
+	validation.String("host", "::1").IsIP(),
+	validation.String("ip", "192.0.2.1").IsIPv4(),
+	validation.String("ipv6", "2001:db8::1").IsIPv6(),
+	validation.String("metadata", `{"source":"web"}`).IsJSON(),
+	validation.String("cursor", "YWJj").IsBase64(),
 )
 fmt.Println(err)
-// <nil>
-fmt.Println(is.Email.Validate("ada@example.com"))
 // <nil>
 
 ```
@@ -165,7 +186,7 @@ When evaluates the callback lazily only when condition is true.
 ```go
 return validation.Validate(
 	validation.When(req.Email != nil, func() validation.Field {
-		return validation.String("email", *req.Email).Required().Email()
+		return validation.String("email", *req.Email).Required().IsEmail()
 	}),
 )
 
@@ -232,7 +253,7 @@ func (r AllowedDomain) Validate(value string) error {
 }
 
 err := validation.Validate(
-	validation.String("email", "ada@other.example").Required().Email().
+	validation.String("email", "ada@other.example").Required().IsEmail().
 		Using(AllowedDomain{Domain: "goforj.dev"}),
 )
 fmt.Println(err)
@@ -253,7 +274,7 @@ ValidateContext collects field violations while giving operational errors preced
 ```go
 unavailable := errors.New("directory unavailable")
 err := validation.ValidateContext(context.Background(),
-	validation.String("email", "ada@example.com").Email().
+	validation.String("email", "ada@example.com").IsEmail().
 		Check(func(ctx context.Context, email string) error {
 			// A real directory client would use ctx and email here.
 			return unavailable
@@ -312,7 +333,7 @@ Label sets the human-readable field name without changing its output path.
 
 ```go
 err := validation.Validate(
-	validation.String("email", "bad").Label("email address").Email().
+	validation.String("email", "bad").Label("email address").IsEmail().
 		Message("Enter your work email address."),
 )
 var failures *validation.Errors
@@ -378,4 +399,4 @@ make generate
 make check-generated
 ```
 
-The root module contains the library, the is catalog, and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [the design record](DESIGN.md) for the research behind the API.
+The root module contains the library and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [the design record](DESIGN.md) for the research behind the API.

@@ -22,7 +22,7 @@ type section struct {
 // sections curates consumer operations rather than enumerating implementation plumbing.
 var sections = []section{
 	{"Values", []string{"String", "Number", "Bool", "Validate"}, "quickstart", []string{"quickstart"}},
-	{"Formats", []string{"Is", "is.Email"}, "formats", []string{"formats"}},
+	{"Formats", []string{"IsEmail", "IsURL", "IsUUID", "IsUUIDv4", "IsUUIDv7", "IsIP", "IsIPv4", "IsIPv6", "IsJSON", "IsBase64"}, "formats", []string{"formats"}},
 	{"Conditions", []string{"When"}, "patch", []string{"patch"}},
 	{"Collections", []string{"Group", "Slice", "Each"}, "nested", []string{"nested"}},
 	{"Custom rules", []string{"Using", "Invalid"}, "custom", []string{"custom_type", "custom"}},
@@ -129,43 +129,28 @@ func render(root string, entries []section) (string, error) {
 // readSymbols keeps public descriptions owned by GoDoc in their implementation files.
 func readSymbols(root string) (map[string]string, error) {
 	result := make(map[string]string)
-	for _, directory := range []string{".", "is"} {
-		entries, err := os.ReadDir(filepath.Join(root, directory))
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil, err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(root, entry.Name()), nil, parser.ParseComments)
 		if err != nil {
 			return nil, err
 		}
-		for _, entry := range entries {
-			if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") || strings.HasSuffix(entry.Name(), "_test.go") {
-				continue
-			}
-			file, err := parser.ParseFile(token.NewFileSet(), filepath.Join(root, directory, entry.Name()), nil, parser.ParseComments)
-			if err != nil {
-				return nil, err
-			}
-			prefix := ""
-			if directory == "is" {
-				prefix = "is."
-			}
-			for _, declaration := range file.Decls {
-				switch d := declaration.(type) {
-				case *ast.FuncDecl:
-					if d.Doc != nil {
-						result[prefix+d.Name.Name] = d.Doc.Text()
-					}
-				case *ast.GenDecl:
-					for _, spec := range d.Specs {
-						switch s := spec.(type) {
-						case *ast.TypeSpec:
-							if d.Doc != nil {
-								result[prefix+s.Name.Name] = d.Doc.Text()
-							}
-						case *ast.ValueSpec:
-							if s.Doc != nil {
-								for _, name := range s.Names {
-									result[prefix+name.Name] = s.Doc.Text()
-								}
-							}
-						}
+		for _, declaration := range file.Decls {
+			switch d := declaration.(type) {
+			case *ast.FuncDecl:
+				if d.Doc != nil {
+					result[d.Name.Name] = d.Doc.Text()
+				}
+			case *ast.GenDecl:
+				for _, spec := range d.Specs {
+					if named, ok := spec.(*ast.TypeSpec); ok && d.Doc != nil {
+						result[named.Name.Name] = d.Doc.Text()
 					}
 				}
 			}
@@ -225,11 +210,6 @@ func calls(code string) (map[string]bool, error) {
 			}
 			if selector, ok := function.(*ast.SelectorExpr); ok {
 				result[selector.Sel.Name] = true
-			}
-		}
-		if selector, ok := node.(*ast.SelectorExpr); ok {
-			if receiver, ok := selector.X.(*ast.Ident); ok && receiver.Name == "is" {
-				result["is."+selector.Sel.Name] = true
 			}
 		}
 		return true

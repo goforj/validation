@@ -35,7 +35,7 @@ import "github.com/goforj/validation"
 
 err := validation.Validate(
     validation.String("name", req.Name).Required().Min(2).Max(100),
-    validation.String("email", req.Email).Required().Email(),
+    validation.String("email", req.Email).Required().IsEmail(),
     validation.Number("age", req.Age).Min(18).Max(120),
     validation.String("role", req.Role).In("member", "admin"),
     validation.Bool("terms", req.Terms).Accepted(),
@@ -45,7 +45,7 @@ if err != nil {
 }
 ```
 
-`String`, `Number`, and `Bool` select the operations available in the chain. `Number` is generic over Go integer and floating-point types, including defined types. `String` and `Bool` should also preserve defined types. A string chain exposes `Email`; a number chain does not. The path is an output label, not a reflective lookup into the request.
+`String`, `Number`, and `Bool` select the operations available in the chain. `Number` is generic over Go integer and floating-point types, including defined types. `String` and `Bool` should also preserve defined types. A string chain exposes `IsEmail`; a number chain does not. The path is an output label, not a reflective lookup into the request.
 
 The proposed core signatures are:
 
@@ -74,56 +74,30 @@ Chain methods return independent builder values, with copy-on-write storage wher
 | --- | --- |
 | `validate:"required,email"` | Short for static rules, but conditions and custom parameters become string conventions. |
 | `Field("email", value, Required(), Email())` | Composable, but repeats constructors and package names for every rule. |
-| `Field("email", value).Required().Email()` | Very concise, but a universal field builder exposes methods that cannot apply to its value type. |
-| `String("email", value).Required().Email()` | Recommended. Small extra type cue, useful editor completion, and invalid rule families fail to compile. |
+| `Field("email", value).Required().IsEmail()` | Very concise, but a universal field builder exposes methods that cannot apply to its value type. |
+| `String("email", value).Required().IsEmail()` | Recommended. Small extra type cue, useful editor completion, and invalid rule families fail to compile. |
 | `Schema(...).Parse(input)` | Useful for dynamic input and schema export, but adds a second data model for applications already using Go structs. |
 
 Explicit paths duplicate JSON field names. Accept that tradeoff initially: rules can validate local variables, computed values, configuration, and domain objects without reflecting over a parent struct. Renaming a Go field remains compiler checked; renaming its external label needs a test.
 
-## Format rules with the is package
+## Fluent format checks
 
-Add `github.com/goforj/validation/is` for a discoverable catalog of reusable string-format rules. This complements fluent field chains:
+Format checks belong directly on string builders, with no extra import:
 
 ```go
-import (
-    "github.com/goforj/validation"
-    "github.com/goforj/validation/is"
-)
-
 err := validation.Validate(
-    validation.String("email", req.Email).Required().Is(is.Email),
-    validation.String("request_id", req.RequestID).Required().Is(is.UUIDv7),
-    validation.String("ip", req.IP).Is(is.IPv4),
-    validation.String("metadata", req.Metadata).Is(is.JSON),
+    validation.String("email", req.Email).Required().IsEmail(),
+    validation.String("request_id", req.RequestID).Required().IsUUIDv7(),
+    validation.String("ip", req.IP).IsIPv4(),
+    validation.String("metadata", req.Metadata).IsJSON(),
 )
 ```
 
-[Ozzo's is package](https://pkg.go.dev/github.com/go-ozzo/ozzo-validation/v4/is) supplies reusable rule objects covering formats such as email, UUID, IP, JSON, Base64, character classes, and country/currency codes. They are validation rules, not boolean predicate functions. Its catalog is useful inspiration for format coverage and discoverability.
+The initial methods are IsEmail, IsURL, IsUUID, IsUUIDv4, IsUUIDv7, IsIP, IsIPv4, IsIPv6, IsJSON, and IsBase64. Each participates in ordinary rule ordering, codes, labels, and message overrides. Defined string types work without casts.
 
-For GoForj, `.Is(rule)` appends one rule to a string chain. It preserves the rule's code and default message, participates in normal field ordering, and supports `.Message(...)` overrides. The existing `.Email()` and `.URL()` methods remain convenient shortcuts for `.Is(is.Email)` and `.Is(is.URL)`, backed by exactly the same checks. Additional formats live in the catalog first; add fluent shortcuts only where common application usage earns them.
+[Ozzo's is package](https://pkg.go.dev/github.com/go-ozzo/ozzo-validation/v4/is) inspired the useful format coverage. The accepted GoForj API puts those operations directly in the fluent chain. Custom validators continue to attach through Using; there is no public is package or generic Is attachment method.
 
-Rules also support standalone checks without constructing a field:
-
-```go
-err := is.Email.Validate("ada@example.com")
-fmt.Println(err)
-// <nil>
-```
-
-`Validate(string) error` returns nil or a coded rule failure without a field path. When used through `.Is(...)`, the field supplies the path and label. Standalone checks and fluent checks must agree on acceptance, codes, and empty-string behavior. An invalid standalone value is an error, rather than a boolean with its message discarded.
-
-| Catalog group | Proposed rules | Scope |
-| --- | --- | --- |
-| Common formats | `Email`, `URL`, `UUID`, `UUIDv4`, `UUIDv7`, `IP`, `IPv4`, `IPv6`, `JSON`, `Base64` | Include in the first implementation. |
-| Character classes | `ASCII`, `Alpha`, `Alphanumeric`, `Lowercase`, `Uppercase` | Add after documenting Unicode and empty-value contracts. |
-| Additional formats | `MAC`, `E164`, `HexColor`, `Semver`, `ISBN` | Follow-up catalog extensions driven by application needs. |
-| Maintained code lists | Country and currency codes | Defer until authoritative data sources and an update policy are chosen. |
-
-`Email` and `URL` use the contracts below and never perform network lookups. `IP` accepts address literals, excluding ports, CIDR prefixes, and zone identifiers. `UUID` should accept canonical hyphenated RFC 9562 UUID representations, including nil and max; version-specific rules enforce their version and variant. `Base64` uses standard padded encoding and rejects whitespace; URL-safe encoding needs a separately named rule. `JSON` accepts any valid JSON value, including scalar values. Format rules reject empty strings.
-
-For character classes, use ASCII semantics for `Alpha` and `Alphanumeric`, with explicitly named Unicode alternatives if needed. Case rules should require at least one cased letter and reject letters of the opposite case, while allowing uncased characters. Pin these contracts with examples before implementing them.
-
-Expose immutable rule values without a mutable global registration system. Keep the package dependency graph acyclic and avoid introducing a module boundary just for `is`. The parent package and catalog share one implementation per format. Test parity between standalone rules, `.Is(...)`, and any fluent shortcut, including custom messages and defined string types.
+The format contracts are documented in [validation contracts](docs/contracts.md). Character classes, country/currency code lists, and specialized application formats remain follow-up work driven by concrete needs.
 
 ## Conditions and related fields
 
@@ -155,7 +129,7 @@ The callback runs during evaluation only when the condition is true. This suppor
 
 ## Empty values and input presence
 
-All supplied values run through their declared rules. Optionality must be explicit. In particular, `Number("age", 0).Min(18)` fails and `String("email", "").Email()` fails.
+All supplied values run through their declared rules. Optionality must be explicit. In particular, `Number("age", 0).Min(18)` fails and `String("email", "").IsEmail()` fails.
 
 | Input | Proposed behavior |
 | --- | --- |
@@ -174,7 +148,7 @@ For a PATCH struct where nil means omitted:
 ```go
 err := validation.Validate(
     validation.When(req.Email != nil, func() validation.Field {
-        return validation.String("email", *req.Email).Required().Email()
+        return validation.String("email", *req.Email).Required().IsEmail()
     }),
 )
 ```
@@ -272,7 +246,7 @@ func (r AllowedDomain) Validate(value string) error {
 }
 
 err := validation.Validate(
-    validation.String("email", req.Email).Required().Email().
+    validation.String("email", req.Email).Required().IsEmail().
         Using(AllowedDomain{Domain: "goforj.dev"}).
         Message("Register with your GoForj email address."),
 )
@@ -301,7 +275,7 @@ Typed `Check` callbacks remain the shortest way to write a one-off context-aware
 
 ```go
 err := validation.ValidateContext(ctx,
-    validation.String("email", req.Email).Required().Email().
+    validation.String("email", req.Email).Required().IsEmail().
         Check(func(ctx context.Context, email string) error {
             exists, err := users.EmailExists(ctx, email)
             if err != nil {
@@ -321,7 +295,7 @@ err := validation.ValidateContext(ctx,
 
 ### Built-in and custom rule parity
 
-Catalog rules implement `Rule[string]`. `.Is(rule)` accepts that public interface, including custom string rules. It converts defined string values to their underlying string for format checking. `.Using(rule)` instead requires `Rule[T]` for the builder's exact value type, retaining domain type safety. Both routes use the same evaluation and error classification. `.Check(fn)` adapts to that same execution path.
+Built-in format methods use the same execution and error classification as application rules. `.Using(rule)` requires `Rule[T]` for the builder's exact value type, retaining domain type safety. `.Check(fn)` adapts to that same execution path.
 
 Add `Value[T](path, value)` for arbitrary domain types. Its builder exposes `.Using`, `.Check`, `.Label`, and `.Message` without scalar-specific methods:
 
@@ -331,7 +305,7 @@ validation.Value("delivery", req.Delivery).Using(DeliveryWindow{})
 
 Here `DeliveryWindow` implements `Rule[Delivery]`, where `req.Delivery` has type `Delivery`. This lets applications validate money, date ranges, coordinates, and other domain values without adding specialized core constructors. Attaching a rule for the wrong type must fail to compile.
 
-For package layering, `is` may import the public parent rule contract. The parent must not import `is`; its fluent format shortcuts use shared internal implementations. This keeps built-in checks and the external extension API aligned without import cycles.
+Shared format implementations stay internal, so no public subpackage or import cycle is needed.
 
 Malformed custom-rule configuration should be rejected by the rule's constructor or returned as an ordinary configuration error. Do not silently skip a nil rule. Rules must not mutate submitted values; concurrency safety of shared dependencies belongs to the rule implementation. Test reusable structs, function adapters, context dispatch, wrapped violations, message overrides, defined types, domain values, and operational errors through every attachment route.
 
@@ -342,7 +316,7 @@ Use helper functions to reuse an entire field chain, and `Rule[T]` implementatio
 ```go
 // emailField keeps email constraints consistent across request types.
 func emailField(path, value string) validation.Field {
-    return validation.String(path, value).Required().Email().Max(254)
+    return validation.String(path, value).Required().IsEmail().Max(254)
 }
 ```
 
@@ -352,20 +326,20 @@ Applications can expose `Validate() error` methods on request types that assembl
 
 | Family | Proposed initial methods | Contract |
 | --- | --- | --- |
-| String | `Required`, `RequiredIf`, `NotBlank`, `Min`, `Max`, `Email`, `URL`, `Is`, `In`, `Equal`, `Match` | Length counts Unicode code points. No trimming or coercion. `Is` appends a catalog rule. `Match` takes a compiled regular expression. |
+| String | `Required`, `RequiredIf`, `NotBlank`, `Min`, `Max`, `IsEmail`, `IsURL`, `IsUUID`, `IsUUIDv4`, `IsUUIDv7`, `IsIP`, `IsIPv4`, `IsIPv6`, `IsJSON`, `IsBase64`, `In`, `Equal`, `Match` | Length counts Unicode code points. No trimming or coercion. `Match` takes a compiled regular expression. |
 | Number | `Min`, `Max`, `In`, `Equal` | Inclusive bounds; preserve signed, unsigned, and floating types without converting integers to float64. Reject NaN and infinities. |
 | Bool | `Accepted`, `Equal` | `Accepted` requires true. False is otherwise valid. |
 | Slice | `Required`, `RequiredIf`, `Min`, `Max`, `Each` | Length counts elements. Preserve the element type. |
 | Value | `Using`, `Check`, `Label`, `Message` | Accept arbitrary domain types and matching typed rules. |
 | Common | `Label`, `Message`, typed `Using` and `Check` | Metadata and checks remain local to the chain. |
 
-`Email` should accept a single bare ASCII mailbox with a domain, reject display names and surrounding whitespace, and perform no DNS calls. Use an explicitly documented application email policy rather than claiming full RFC or deliverability verification. `URL` should require an absolute HTTP or HTTPS URL with a host. Additional schemes can use a custom check. Unicode mailbox policy, IDNA, and URL edge cases need a focused contract and test pass before release.
+`IsEmail` accepts a single bare ASCII mailbox with a domain, reject display names and surrounding whitespace, and perform no DNS calls. Use an explicitly documented application email policy rather than claiming full RFC or deliverability verification. `IsURL` requires an absolute HTTP or HTTPS URL with a host. Additional schemes can use a custom check. Unicode mailbox policy, IDNA, and URL edge cases need a focused contract and test pass before release.
 
 Reject malformed rule configuration, such as negative length bounds or a nil regex/callback, as configuration errors during evaluation. Empty `In()` is a configuration error. Incompatible rule methods should fail to compile. For numeric `Min`/`Max`, negative bounds are valid for signed types. A bound outside the field type must fail to compile rather than be silently narrowed.
 
 ## First release and follow-up work
 
-Implement the constructors and rules above, the public rule interfaces and function adapters, the first group of `is` format rules, `Validate`, `ValidateContext`, `When`, `Group`, structured errors, and `Invalid`. Aim for standard-library-only dependencies. No selected feature requires generic methods or a recent Go language increase; set the actual minimum Go version after checking GoForj support policy and compiling with the chosen baseline.
+Implement the constructors and rules above, the public rule interfaces and function adapters, the format methods, `Validate`, `ValidateContext`, `When`, `Group`, structured errors, and `Invalid`. Aim for standard-library-only dependencies. No selected feature requires generic methods or a recent Go language increase; set the actual minimum Go version after checking GoForj support policy and compiling with the chosen baseline.
 
 Before freezing the API, build executable examples for registration, PATCH, nested orders, a reusable field helper, and a dependency failure through a context-aware callback. Evaluation stays sequential. Test empty values, defined primitive types, integer limits, Unicode lengths, stable ordering, lazy callbacks, cancellation, operational error precedence, independent builder branches, repeated evaluation, and path escaping. Test every validation and configuration failure branch directly. Add compile-failure fixtures for invalid method families and value/bound type mismatches.
 

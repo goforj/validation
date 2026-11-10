@@ -31,7 +31,7 @@ func failureAt(t *testing.T, field Field, code string) []Issue {
 func TestRegistration(t *testing.T) {
 	if err := Validate(
 		String("name", "Ada").Required().NotBlank().Min(2).Max(100),
-		String("email", "ada@example.com").Required().Email(),
+		String("email", "ada@example.com").Required().IsEmail(),
 		Number("age", 36).Min(18).Max(120),
 		String("role", "member").In("member", "admin"),
 		Bool("terms", true).Accepted(),
@@ -77,16 +77,16 @@ func TestStringRules(t *testing.T) {
 		{"equal", String("confirmation", "other").Equal("secret"), "equal"},
 		{"in", String("role", "owner").In("member", "admin"), "in"},
 		{"match", String("sku", "abc").Match(regexp.MustCompile(`^\d+$`)), "match"},
-		{"email", String("email", "").Email(), "email"},
-		{"url", String("url", "ftp://example.com").URL(), "url"},
+		{"email", String("email", "").IsEmail(), "email"},
+		{"url", String("url", "ftp://example.com").IsURL(), "url"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) { failureAt(t, tt.field, tt.code) })
 	}
-	if err := Validate(String("name", "é日").NotBlank().Min(2).Max(2).Equal("é日"), String("role", "member").In("member"), String("sku", "123").Match(regexp.MustCompile(`^\d+$`)), String("site", "https://example.com").URL()); err != nil {
+	if err := Validate(String("name", "é日").NotBlank().Min(2).Max(2).Equal("é日"), String("role", "member").In("member"), String("sku", "123").Match(regexp.MustCompile(`^\d+$`)), String("site", "https://example.com").IsURL()); err != nil {
 		t.Fatal(err)
 	}
-	issue := failureAt(t, String("email", "bad").Label("email address").Email(), "email")[0]
+	issue := failureAt(t, String("email", "bad").Label("email address").IsEmail(), "email")[0]
 	if issue.Message != "The email address field must be a valid email address." {
 		t.Fatal(issue)
 	}
@@ -131,7 +131,7 @@ func TestConfigurationErrors(t *testing.T) {
 	tests := []Field{
 		String("s", "").Required().Min(-1), String("s", "").Max(-1), String("s", "").In(),
 		String("s", "").Match(nil), String("s", "").Message("bad"), String("s", "").Using(nil),
-		String("s", "").Is(nil), String("s", "").Check(nil),
+		String("s", "").Check(nil),
 		Number("n", 0.0).Min(math.NaN()), Number("n", 0.0).Max(math.Inf(1)), Number("n", 0.0).Equal(math.NaN()),
 		Number("n", 0).In(), Number("n", 0.0).In(math.Inf(-1)),
 		Slice[int]("s", nil).Min(-1), Slice[int]("s", nil).Max(-1), Slice[int]("s", nil).Each(nil),
@@ -164,14 +164,14 @@ func TestConfigurationErrors(t *testing.T) {
 // TestConditions exercises lazy optional input and required-only conditions.
 func TestConditions(t *testing.T) {
 	var email *string
-	if err := Validate(When(email != nil, func() Field { return String("email", *email).Required().Email() }), String("company", "").RequiredIf(false).Max(200), Slice[int]("items", nil).RequiredIf(false)); err != nil {
+	if err := Validate(When(email != nil, func() Field { return String("email", *email).Required().IsEmail() }), String("company", "").RequiredIf(false).Max(200), Slice[int]("items", nil).RequiredIf(false)); err != nil {
 		t.Fatal(err)
 	}
 	empty := ""
 	email = &empty
-	failureAt(t, When(email != nil, func() Field { return String("email", *email).Required().Email() }), "required")
+	failureAt(t, When(email != nil, func() Field { return String("email", *email).Required().IsEmail() }), "required")
 	failureAt(t, String("company", "too long").RequiredIf(false).Max(2), "max")
-	failureAt(t, String("company", "").Email().RequiredIf(true), "required")
+	failureAt(t, String("company", "").IsEmail().RequiredIf(true), "required")
 	failureAt(t, Slice[int]("items", nil).RequiredIf(true), "required")
 	if err := Validate(String("company", "").RequiredIf(false).Message("Company is required."), Slice[int]("items", nil).RequiredIf(false).Message("Items are required.")); err != nil {
 		t.Fatal(err)
@@ -246,7 +246,7 @@ func (r domainRule) Validate(value string) error {
 
 // TestCustomRules verifies configured structs, adapters, domain values, and operational errors.
 func TestCustomRules(t *testing.T) {
-	if err := Validate(String("email", "a@example.com").Email().Using(domainRule{"example.com"})); err != nil {
+	if err := Validate(String("email", "a@example.com").IsEmail().Using(domainRule{"example.com"})); err != nil {
 		t.Fatal(err)
 	}
 	issue := failureAt(t, String("email", "a@other.com").Using(domainRule{"example.com"}), "domain")[0]
@@ -258,7 +258,7 @@ func TestCustomRules(t *testing.T) {
 		t.Fatal(issue)
 	}
 	wrapped := RuleFunc[string](func(string) error { return fmt.Errorf("wrapped: %w", Invalid("wrapped", "Safe message")) })
-	failureAt(t, String("s", "secret").Is(wrapped), "wrapped")
+	failureAt(t, String("s", "secret").Using(wrapped), "wrapped")
 	operational := errors.New("database unavailable")
 	err := Validate(String("first", "").Required(), String("second", "value").Using(RuleFunc[string](func(string) error { return operational })).Message("must not mask operational errors"))
 	var failures *Errors
@@ -304,7 +304,7 @@ func TestContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	called := false
 	rule := contextualRule{&called, ctx}
-	if err := ValidateContext(ctx, String("s", "value").Using(rule), String("s", "value").Is(rule)); err != nil || !called {
+	if err := ValidateContext(ctx, String("s", "value").Using(rule), String("s", "value").Using(rule)); err != nil || !called {
 		t.Fatalf("called %v, err %v", called, err)
 	}
 	fn := ContextRuleFunc[string](func(ctx context.Context, _ string) error { return ctx.Err() })
@@ -386,7 +386,7 @@ func TestDefinedTypes(t *testing.T) {
 	type name string
 	type age uint64
 	type accepted bool
-	if err := Validate(String("name", name("Ada")).Email().Message("not email")); err == nil {
+	if err := Validate(String("name", name("Ada")).IsEmail().Message("not email")); err == nil {
 		t.Fatal("bad defined-string email accepted")
 	}
 	if err := Validate(

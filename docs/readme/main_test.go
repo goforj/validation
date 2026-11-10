@@ -21,7 +21,7 @@ func fixture(t *testing.T) string {
 		t.Fatal(err)
 	}
 	sources = append(sources, examples...)
-	sources = append(sources, "../../is/is.go", "../../docs/README.tmpl")
+	sources = append(sources, "../../docs/README.tmpl")
 	for _, source := range sources {
 		relative, err := filepath.Rel("../..", source)
 		if err != nil {
@@ -90,17 +90,13 @@ func TestGenerate(t *testing.T) {
 
 // TestSourceErrors protects generation from missing and malformed authoritative inputs.
 func TestSourceErrors(t *testing.T) {
-	for _, name := range []string{"root", "catalog", "source", "template", "program", "snippet", "syntax", "symbol", "demonstration", "duplicate", "marker", "write"} {
+	for _, name := range []string{"root", "source", "template", "program", "snippet", "syntax", "symbol", "demonstration", "duplicate", "marker", "write"} {
 		t.Run(name, func(t *testing.T) {
 			root := fixture(t)
 			entries := sections
 			switch name {
 			case "root":
 				root = filepath.Join(root, "absent")
-			case "catalog":
-				if err := os.RemoveAll(filepath.Join(root, "is")); err != nil {
-					t.Fatal(err)
-				}
 			case "source":
 				write(t, filepath.Join(root, "broken.go"), "package ???")
 			case "template":

@@ -10,7 +10,7 @@ When constructs its field lazily. A pointer can distinguish a supplied value fro
 
 ## Rules and errors
 
-Rule[T] implementations can be ordinary application or third-party types. Using accepts the builder's exact type. Is accepts Rule[string], including for defined string values. RuleFunc and ContextRuleFunc adapt functions. RuleWithContext takes precedence over Validate when both are available. Check attaches a context-aware function directly.
+Rule[T] implementations can be ordinary application or third-party types. Using accepts the builder's exact type. Format methods preserve defined string types. RuleFunc and ContextRuleFunc adapt functions. RuleWithContext takes precedence over Validate when both are available. Check attaches a context-aware function directly.
 
 Return Invalid(code, message) for an input violation, using a message safe to expose. Other errors are operational and abort the entire evaluation, even if an earlier field failed. Error wrapping preserves errors.Is and errors.As. A wrapper around a Violation remains a violation. Joined errors remain operational if any child is operational; a join containing only violations contributes its first violation to the field.
 
@@ -22,18 +22,18 @@ Nil fields, rules, regular expressions, and callbacks; empty In lists; negative 
 
 ## Format policies
 
-All format rules reject empty strings and perform no network access. The catalog uses immutable constants, so built-in rules cannot be replaced through global assignment.
+All format methods reject empty strings and perform no network access. Their shared implementations are internal to the library.
 
-| Rule | Accepted format |
+| Method | Accepted format |
 | --- | --- |
-| Email | One bare ASCII mailbox, at most 254 bytes overall and 64 bytes before the final @, with a dotted ASCII DNS domain. Display names, quoted local parts, address literals, control characters, and surrounding whitespace are rejected. No DNS or deliverability check. |
-| URL | Absolute http or https URL with a valid ASCII DNS hostname or IP literal. Localhost and a trailing DNS root dot are accepted. Ports, when present, are 1 through 65535. Whitespace, zones, and invalid escapes are rejected. This is a syntax check, not an SSRF policy. |
-| UUID | Canonical hyphenated UUID, case insensitive, versions 1 through 8 with the RFC variant, plus nil and max UUIDs. |
-| UUIDv4 and UUIDv7 | Canonical spelling with the named version and RFC variant. |
-| IP and IPv4 | Unzoned address literals without port numbers or CIDR prefixes. IPv4 excludes mapped IPv6 addresses. |
-| IPv6 | Unzoned IPv6 literals, including IPv4-mapped IPv6 addresses. |
-| JSON | Any valid JSON document, including scalar values and null. |
-| Base64 | Nonempty standard padded Base64 with canonical trailing bits and no whitespace. Inputs whose byte length needs no padding remain valid without equals signs. |
+| IsEmail | One bare ASCII mailbox, at most 254 bytes overall and 64 bytes before the final @, with a dotted ASCII DNS domain. Display names, quoted local parts, address literals, control characters, and surrounding whitespace are rejected. No DNS or deliverability check. |
+| IsURL | Absolute http or https URL with a valid ASCII DNS hostname or IP literal. Localhost and a trailing DNS root dot are accepted. Ports, when present, are 1 through 65535. Whitespace, zones, and invalid escapes are rejected. This is a syntax check, not an SSRF policy. |
+| IsUUID | Canonical hyphenated UUID, case insensitive, versions 1 through 8 with the RFC variant, plus nil and max UUIDs. |
+| IsUUIDv4 and IsUUIDv7 | Canonical spelling with the named version and RFC variant. |
+| IsIP and IsIPv4 | Unzoned address literals without port numbers or CIDR prefixes. IPv4 excludes mapped IPv6 addresses. |
+| IsIPv6 | Unzoned IPv6 literals, including IPv4-mapped IPv6 addresses. |
+| IsJSON | Any valid JSON document, including scalar values and null. |
+| IsBase64 | Nonempty standard padded Base64 with canonical trailing bits and no whitespace. Inputs whose byte length needs no padding remain valid without equals signs. |
 
 ## Paths and ownership
 

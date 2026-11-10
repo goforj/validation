@@ -5,7 +5,7 @@ import "testing"
 // BenchmarkRegistration measures a complete successful application request.
 func BenchmarkRegistration(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		if err := Validate(String("name", "Ada").Required().Min(2), String("email", "ada@example.com").Required().Email(), Number("age", 36).Min(18), Bool("terms", true).Accepted()); err != nil {
+		if err := Validate(String("name", "Ada").Required().Min(2), String("email", "ada@example.com").Required().IsEmail(), Number("age", 36).Min(18), Bool("terms", true).Accepted()); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -14,7 +14,7 @@ func BenchmarkRegistration(b *testing.B) {
 // BenchmarkInvalidRequest measures aggregation rather than only the first failed field.
 func BenchmarkInvalidRequest(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		if err := Validate(String("name", "").Required(), String("email", "bad").Email(), Number("age", 0).Min(18)); err == nil {
+		if err := Validate(String("name", "").Required(), String("email", "bad").IsEmail(), Number("age", 0).Min(18)); err == nil {
 			b.Fatal("invalid input passed")
 		}
 	}

@@ -16,7 +16,7 @@ func (req ProfilePatch) Validate() error {
 	// snippet:patch
 	return validation.Validate(
 		validation.When(req.Email != nil, func() validation.Field {
-			return validation.String("email", *req.Email).Required().Email()
+			return validation.String("email", *req.Email).Required().IsEmail()
 		}),
 	)
 	// endsnippet:patch

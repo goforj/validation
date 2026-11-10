@@ -76,25 +76,40 @@ func (b StringField[T]) Max(max int) StringField[T] {
 	return b
 }
 
-// Is attaches a string-format rule, including to a defined string type.
-func (b StringField[T]) Is(rule Rule[string]) StringField[T] {
-	if nilValue(rule) {
-		b.f = b.f.add(step[T]{problem: "nil format rule"})
-		return b
-	}
-	return b.Check(func(ctx context.Context, value T) error {
-		if contextual, ok := rule.(RuleWithContext[string]); ok {
-			return contextual.ValidateContext(ctx, string(value))
-		}
-		return rule.Validate(string(value))
-	})
+// format adapts shared format checks while preserving application-defined string types.
+func (b StringField[T]) format(rule formats.Rule) StringField[T] {
+	return b.Check(func(_ context.Context, value T) error { return rule.Validate(string(value)) })
 }
 
-// Email requires a bare ASCII mailbox with a domain and performs no DNS lookup.
-func (b StringField[T]) Email() StringField[T] { return b.Is(formats.Email) }
+// IsEmail requires a bare ASCII mailbox with a dotted domain.
+func (b StringField[T]) IsEmail() StringField[T] { return b.format(formats.Email) }
 
-// URL requires an absolute HTTP or HTTPS URL with a host.
-func (b StringField[T]) URL() StringField[T] { return b.Is(formats.URL) }
+// IsURL requires an absolute HTTP or HTTPS URL with a host.
+func (b StringField[T]) IsURL() StringField[T] { return b.format(formats.URL) }
+
+// IsUUID requires a canonical UUID, including nil and max UUIDs.
+func (b StringField[T]) IsUUID() StringField[T] { return b.format(formats.UUID) }
+
+// IsUUIDv4 requires a canonical version 4 UUID.
+func (b StringField[T]) IsUUIDv4() StringField[T] { return b.format(formats.UUIDv4) }
+
+// IsUUIDv7 requires a canonical version 7 UUID.
+func (b StringField[T]) IsUUIDv7() StringField[T] { return b.format(formats.UUIDv7) }
+
+// IsIP requires an unzoned IP address literal.
+func (b StringField[T]) IsIP() StringField[T] { return b.format(formats.IP) }
+
+// IsIPv4 requires an IPv4 address literal.
+func (b StringField[T]) IsIPv4() StringField[T] { return b.format(formats.IPv4) }
+
+// IsIPv6 requires an unzoned IPv6 address literal.
+func (b StringField[T]) IsIPv6() StringField[T] { return b.format(formats.IPv6) }
+
+// IsJSON requires any valid JSON document, including scalar values.
+func (b StringField[T]) IsJSON() StringField[T] { return b.format(formats.JSON) }
+
+// IsBase64 requires strict standard padded Base64 without whitespace.
+func (b StringField[T]) IsBase64() StringField[T] { return b.format(formats.Base64) }
 
 // Equal requires the other value without retaining it in failure details.
 func (b StringField[T]) Equal(other T) StringField[T] {

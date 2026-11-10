@@ -1,4 +1,4 @@
-// Package formats owns format checks shared by fluent shortcuts and the is catalog.
+// Package formats owns the checks behind fluent string format methods.
 package formats
 
 import (

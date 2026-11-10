@@ -21,7 +21,7 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 | :--- | :--- |
 | <img src="docs/assets/check.svg" width="22" height="22" alt=""> Typed chains | String, number, boolean, slice, and domain-value builders expose relevant operations. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt=""> Reusable rules | Plug in custom validator types or functions without global registration. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Format catalog | Reuse email, URL, UUID, IP, JSON, and Base64 checks through the is package. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Format checks | Check email, URL, UUID, IP, JSON, and Base64 directly in the fluent chain. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt=""> Field errors | Ordered paths, stable codes, custom messages, and separate operational errors. |
 
 ## Quick start
@@ -76,4 +76,4 @@ make generate
 make check-generated
 ```
 
-The root module contains the library, the is catalog, and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [the design record](DESIGN.md) for the research behind the API.
+The root module contains the library and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [the design record](DESIGN.md) for the research behind the API.
