@@ -61,10 +61,28 @@ func FuzzFormats(f *testing.F) {
 		f.Add(value)
 	}
 	f.Fuzz(func(t *testing.T, value string) {
-		for rule := Email; rule <= Base64; rule++ {
+		for rule := Email; rule <= UTF8; rule++ {
 			if err := rule.Validate(value); err != nil && err.Error() == "" {
 				t.Fatal("format returned an empty failure")
 			}
+		}
+	})
+}
+
+// FuzzBase64URL compares chunked validation with the complete standard-library decoder.
+func FuzzBase64URL(f *testing.F) {
+	for _, value := range []string{"", "YQ", "YQ==", "YR", "__8", "__8=", "__9=", strings.Repeat("YWJj", 257) + "YQ"} {
+		f.Add(value)
+	}
+	f.Fuzz(func(t *testing.T, value string) {
+		decoder := base64.RawURLEncoding.Strict()
+		if strings.ContainsRune(value, '=') {
+			decoder = base64.URLEncoding.Strict()
+		}
+		_, err := decoder.DecodeString(value)
+		want := value != "" && err == nil && !strings.ContainsAny(value, "\r\n")
+		if got := validBase64URL(value); got != want {
+			t.Fatalf("got %v, want %v", got, want)
 		}
 	})
 }

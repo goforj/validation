@@ -5,12 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/mail"
 	"net/netip"
 	"net/url"
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/goforj/validation/internal/violation"
 )
@@ -39,6 +41,32 @@ const (
 	JSON
 	// Base64 checks strict standard padded Base64 without whitespace.
 	Base64
+	// ULID checks a 128-bit Crockford Base32 identifier.
+	ULID
+	// Hostname checks ASCII DNS labels without resolution.
+	Hostname
+	// CIDR checks an IP prefix without requiring masked host bits.
+	CIDR
+	// MAC checks a 48-bit or 64-bit link-layer address.
+	MAC
+	// E164 checks international phone-number syntax without dialing metadata.
+	E164
+	// Base64URL checks padded or raw URL-safe Base64.
+	Base64URL
+	// Alpha checks nonempty ASCII letters.
+	Alpha
+	// Alphanumeric checks nonempty ASCII letters and digits.
+	Alphanumeric
+	// Digits checks nonempty ASCII decimal digits.
+	Digits
+	// ASCII checks nonempty ASCII text, including control bytes.
+	ASCII
+	// Lowercase checks valid UTF-8 with lowercase cased letters.
+	Lowercase
+	// Uppercase checks valid UTF-8 with uppercase cased letters.
+	Uppercase
+	// UTF8 checks valid UTF-8, including empty text.
+	UTF8
 )
 
 // Validate returns a coded failure without retaining the submitted string.
@@ -74,6 +102,40 @@ func (r Rule) Validate(value string) error {
 		valid, code, message = json.Valid([]byte(value)), "json", "must be valid JSON"
 	case Base64:
 		valid, code, message = validBase64(value), "base64", "must be standard padded Base64"
+	case ULID:
+		valid, code, message = ulid(value), "ulid", "must be a valid ULID"
+	case Hostname:
+		valid, code, message = hostname(strings.TrimSuffix(value, ".")), "hostname", "must be a valid ASCII hostname"
+	case CIDR:
+		_, err := netip.ParsePrefix(value)
+		valid, code, message = err == nil, "cidr", "must be a valid IP prefix"
+	case MAC:
+		address, err := net.ParseMAC(value)
+		valid, code, message = err == nil && (len(address) == 6 || len(address) == 8), "mac", "must be a valid MAC address"
+	case E164:
+		valid, code, message = phone(value), "e164", "must be an international phone number"
+	case Base64URL:
+		valid, code, message = validBase64URL(value), "base64_url", "must be URL-safe Base64"
+	case Alpha, Alphanumeric, Digits, ASCII:
+		valid = asciiText(value, r)
+		switch r {
+		case Alpha:
+			code, message = "alpha", "must contain only ASCII letters"
+		case Alphanumeric:
+			code, message = "alphanumeric", "must contain only ASCII letters and digits"
+		case Digits:
+			code, message = "digits", "must contain only ASCII digits"
+		case ASCII:
+			code, message = "ascii", "must contain only ASCII characters"
+		}
+	case Lowercase, Uppercase:
+		valid = letterCase(value, r)
+		code, message = "lowercase", "must use lowercase letters"
+		if r == Uppercase {
+			code, message = "uppercase", "must use uppercase letters"
+		}
+	case UTF8:
+		valid, code, message = utf8.ValidString(value), "utf8", "must be valid UTF-8"
 	default:
 		return fmt.Errorf("validation: unknown format rule %d", r)
 	}
@@ -88,9 +150,13 @@ func validBase64(value string) bool {
 	if value == "" || len(value)%4 != 0 || strings.ContainsAny(value, "\r\n") {
 		return false
 	}
+	return decodeBase64(value, base64.StdEncoding.Strict())
+}
+
+// decodeBase64 bounds scratch storage for both standard and URL-safe alphabets.
+func decodeBase64(value string, decoder *base64.Encoding) bool {
 	const block = 1024
 	var scratch [block / 4 * 3]byte
-	decoder := base64.StdEncoding.Strict()
 	for len(value) > block {
 		chunk := value[:block]
 		// Padding is legal only in the final quantum of the complete input.
@@ -224,4 +290,73 @@ func uuid(value string, rule Rule) bool {
 	default:
 		return value[14] >= '1' && value[14] <= '8'
 	}
+}
+
+// validBase64URL accepts either complete padded or canonical unpadded URL-safe input.
+func validBase64URL(value string) bool {
+	if value == "" || strings.ContainsAny(value, "\r\n") {
+		return false
+	}
+	decoder := base64.RawURLEncoding.Strict()
+	if strings.ContainsRune(value, '=') {
+		decoder = base64.URLEncoding.Strict()
+	}
+	return decodeBase64(value, decoder)
+}
+
+// ulid enforces the specification's alphabet and 128-bit overflow limit.
+func ulid(value string) bool {
+	if len(value) != 26 || value[0] < '0' || value[0] > '7' {
+		return false
+	}
+	for _, r := range value {
+		if !strings.ContainsRune("0123456789ABCDEFGHJKMNPQRSTVWXYZabcdefghjkmnpqrstvwxyz", r) {
+			return false
+		}
+	}
+	return true
+}
+
+// phone checks E.164 spelling without claiming assignment or reachability.
+func phone(value string) bool {
+	if len(value) < 3 || len(value) > 16 || value[0] != '+' || value[1] < '1' || value[1] > '9' {
+		return false
+	}
+	for _, r := range value[2:] {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// asciiText keeps character-class policies explicit and independent of Unicode locale.
+func asciiText(value string, rule Rule) bool {
+	if value == "" {
+		return false
+	}
+	for _, r := range value {
+		letter := r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z'
+		digit := r >= '0' && r <= '9'
+		if rule == Alpha && !letter || rule == Alphanumeric && !letter && !digit || rule == Digits && !digit || r > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
+}
+
+// letterCase requires a cased letter and rejects malformed UTF-8 and opposite case.
+func letterCase(value string, rule Rule) bool {
+	if !utf8.ValidString(value) {
+		return false
+	}
+	found := false
+	for _, r := range value {
+		lower, upper := unicode.IsLower(r), unicode.IsUpper(r)
+		if unicode.IsTitle(r) || rule == Lowercase && upper || rule == Uppercase && lower {
+			return false
+		}
+		found = found || lower || upper
+	}
+	return found
 }

@@ -87,6 +87,7 @@ Complete programs:
 - [advanced](examples/advanced/main.go)
 - [time](examples/time/main.go)
 - [presence](examples/presence/main.go)
+- [moreformats](examples/moreformats/main.go)
 
 ## API index
 
@@ -106,6 +107,7 @@ Complete programs:
 | **Collection constraints** | [Map](#map) · [Unique](#unique) · [UniqueBy](#uniqueby) · [HasKey](#haskey) · [OnlyKeys](#onlykeys) |
 | **Dates and times** | [Time](#time) · [Before](#before) · [After](#after) · [IsDate](#isdate) · [IsDateIn](#isdatein) |
 | **Optional inputs** | [Presence](#presence) · [Nullable](#nullable) · [Optional](#optional) · [Provided](#provided) · [Null](#null) · [IsPresent](#ispresent) · [IsNull](#isnull) · [Get](#get) |
+| **More formats** | [IsULID](#isulid) · [IsHostname](#ishostname) · [IsCIDR](#iscidr) · [IsMAC](#ismac) · [IsE164](#ise164) · [IsBase64URL](#isbase64url) · [IsAlpha](#isalpha) · [IsAlphanumeric](#isalphanumeric) · [IsDigits](#isdigits) · [IsASCII](#isascii) · [IsLowercase](#islowercase) · [IsUppercase](#isuppercase) · [IsUTF8](#isutf8) |
 
 ## Values
 
@@ -555,6 +557,58 @@ fmt.Println(validation.Validate(validation.Optional(nickname, nonBlank)))
 // <nil>
 name := "Ada"
 fmt.Println(validation.Validate(validation.Optional(&name, nonBlank), validation.Presence("name", validation.Provided(name), nonBlank)))
+// <nil>
+
+```
+
+## More formats
+
+<a id="isulid"></a>
+
+<a id="ishostname"></a>
+
+<a id="iscidr"></a>
+
+<a id="ismac"></a>
+
+<a id="ise164"></a>
+
+<a id="isbase64url"></a>
+
+<a id="isalpha"></a>
+
+<a id="isalphanumeric"></a>
+
+<a id="isdigits"></a>
+
+<a id="isascii"></a>
+
+<a id="islowercase"></a>
+
+<a id="isuppercase"></a>
+
+<a id="isutf8"></a>
+
+### IsULID · IsHostname · IsCIDR · IsMAC · IsE164 · IsBase64URL · IsAlpha · IsAlphanumeric · IsDigits · IsASCII · IsLowercase · IsUppercase · IsUTF8
+
+IsULID requires a case-insensitive 128-bit ULID.
+
+```go
+fmt.Println(validation.Validate(
+	validation.String("id", "01ARZ3NDEKTSV4RRFFQ69G5FAV").IsULID(),
+	validation.String("host", "api.example.com").IsHostname(),
+	validation.String("network", "192.0.2.0/24").IsCIDR(),
+	validation.String("device", "00:11:22:33:44:55").IsMAC(),
+	validation.String("phone", "+14155552671").IsE164(),
+	validation.String("token", "__8").IsBase64URL(),
+	validation.String("name", "Ada").IsAlpha(),
+	validation.String("sku", "A123").IsAlphanumeric(),
+	validation.String("pin", "012345").IsDigits(),
+	validation.String("key", "header_name").IsASCII(),
+	validation.String("slug", "café").IsLowercase(),
+	validation.String("code", "ÉCOLE").IsUppercase(),
+	validation.String("title", "こんにちは").IsUTF8(),
+))
 // <nil>
 
 ```
