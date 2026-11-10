@@ -19,10 +19,11 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 
 | Feature | What it provides |
 | :--- | :--- |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Typed chains | String, number, boolean, slice, and domain-value builders expose relevant operations. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Reusable rules | Plug in custom validator types or functions without global registration. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Format checks | Check email, URL, UUID, IP, JSON, and Base64 directly in the fluent chain. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Field errors | Ordered paths, stable codes, custom messages, and separate operational errors. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Typed chains | String, number, boolean, time, slice, map, and domain-value builders expose relevant operations. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Reusable rules | Compose reusable rules and plug in custom validator types or functions without global registration. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Format checks | Check email, URL, UUID, ULID, network values, encodings, dates, and character classes directly in the fluent chain. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Field errors | Ordered paths, stable codes, configurable collection, localized messages, and separate operational errors. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Optional inputs | Distinguish omitted properties, explicit null, and supplied zero values without eager callbacks. |
 
 ## Quick start
 
@@ -57,7 +58,7 @@ fmt.Println(err)
 ## How it works
 
 - **Values are explicit.** Zero and false are ordinary values. Rules evaluate empty strings unless you use a lazy condition to omit a field. Required checks run before content checks.
-- **Errors stay useful.** Validation collects the first violation per field. Custom messages retain their machine code. Unexpected rule errors abort evaluation and remain operational errors.
+- **Errors stay useful.** Validation collects the first violation per field by default. Use `New().CollectAll()` for all content failures or `StopOnFirstError()` to stop globally. Custom messages retain their machine code. Unexpected rule errors abort evaluation and remain operational errors.
 - **Custom rules fit the same chain.** Implement Rule[T] with Validate(T) error, or use a function adapter. Return validation.Invalid for an input failure. Add RuleWithContext[T] for dependencies that need cancellation.
 - **Evaluation is local.** Builders can be branched and reused. Input slices and application dependencies are borrowed. Coordinate concurrent mutation in your application.
 
@@ -88,6 +89,7 @@ Complete programs:
 - [time](examples/time/main.go)
 - [presence](examples/presence/main.go)
 - [moreformats](examples/moreformats/main.go)
+- [policies](examples/policies/main.go)
 
 ## API index
 
@@ -108,6 +110,8 @@ Complete programs:
 | **Dates and times** | [Time](#time) · [Before](#before) · [After](#after) · [IsDate](#isdate) · [IsDateIn](#isdatein) |
 | **Optional inputs** | [Presence](#presence) · [Nullable](#nullable) · [Optional](#optional) · [Provided](#provided) · [Null](#null) · [IsPresent](#ispresent) · [IsNull](#isnull) · [Get](#get) |
 | **More formats** | [IsULID](#isulid) · [IsHostname](#ishostname) · [IsCIDR](#iscidr) · [IsMAC](#ismac) · [IsE164](#ise164) · [IsBase64URL](#isbase64url) · [IsAlpha](#isalpha) · [IsAlphanumeric](#isalphanumeric) · [IsDigits](#isdigits) · [IsASCII](#isascii) · [IsLowercase](#islowercase) · [IsUppercase](#isuppercase) · [IsUTF8](#isutf8) |
+| **Composition** | [Any](#any) · [All](#all) · [Not](#not) |
+| **Evaluation policy** | [New](#new) · [CollectAll](#collectall) · [StopOnFirstError](#stoponfirsterror) · [FormatMessages](#formatmessages) |
 
 ## Values
 
@@ -279,7 +283,7 @@ fmt.Println(err)
 
 ### ValidateContext · Check
 
-ValidateContext collects field violations while giving operational errors precedence.
+ValidateContext evaluates with request cancellation and the configured collection policy.
 
 ```go
 unavailable := errors.New("directory unavailable")
@@ -610,6 +614,65 @@ fmt.Println(validation.Validate(
 	validation.String("title", "こんにちは").IsUTF8(),
 ))
 // <nil>
+
+```
+
+## Composition
+
+<a id="any"></a>
+
+<a id="all"></a>
+
+<a id="not"></a>
+
+### Any · All · Not
+
+Any accepts a value when a rule succeeds; operational errors abort evaluation.
+
+```go
+startsA := validation.RuleFunc[string](func(v string) error {
+	if strings.HasPrefix(v, "A") {
+		return nil
+	}
+	return validation.Invalid("starts_a", "Must start with A")
+})
+endsZ := validation.ContextRuleFunc[string](func(_ context.Context, v string) error {
+	if strings.HasSuffix(v, "Z") {
+		return nil
+	}
+	return validation.Invalid("ends_z", "Must end with Z")
+})
+fmt.Println(validation.Validate(validation.String("code", "ABC").Using(validation.All(validation.Any[string](startsA, endsZ), validation.Not[string](endsZ)))))
+// <nil>
+fmt.Println(validation.Validate(validation.String("code", "XYZ").Using(validation.Any[string](startsA, endsZ))))
+// <nil>
+
+```
+
+## Evaluation policy
+
+<a id="new"></a>
+
+<a id="collectall"></a>
+
+<a id="stoponfirsterror"></a>
+
+<a id="formatmessages"></a>
+
+### New · CollectAll · StopOnFirstError · FormatMessages
+
+New creates a validator with first-violation-per-field collection and default messages.
+
+```go
+validator := validation.New().CollectAll().FormatMessages(func(issue validation.Issue) string { return issue.Path + ": " + issue.Code })
+var failures *validation.Errors
+if err := validator.Validate(validation.String("name", "a").Min(3).Contains("z")); errors.As(err, &failures) {
+	fmt.Println(failures.Messages()["name"])
+	// [name: min name: contains]
+}
+first := validator.StopOnFirstError()
+fmt.Println(first.ValidateContext(context.Background(), validation.String("name", "").Required(), validation.Number("age", 0).Min(18)))
+// name: required
 
 ```
 

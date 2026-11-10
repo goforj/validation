@@ -36,6 +36,8 @@ var sections = []section{
 	{"Dates and times", []string{"Time", "Before", "After", "IsDate", "IsDateIn"}, "time", []string{"time"}},
 	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence"}},
 	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}},
+	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}},
+	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}},
 }
 
 // main fails visibly rather than leaving stale generated documentation on disk.

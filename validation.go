@@ -19,17 +19,7 @@ func Validate(fields ...Field) error { return ValidateContext(context.Background
 
 // ValidateContext collects field violations while giving operational errors precedence.
 func ValidateContext(ctx context.Context, fields ...Field) error {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	var issues []Issue
-	if err := evaluateFields(ctx, nil, fields, &issues); err != nil {
-		return err
-	}
-	if len(issues) > 0 {
-		return &Errors{issues: issues}
-	}
-	return nil
+	return New().ValidateContext(ctx, fields...)
 }
 
 // evaluateFields centralizes cancellation and nil-field handling across nested evaluations.
@@ -38,6 +28,9 @@ func evaluateFields(ctx context.Context, prefix []string, fields []Field, issues
 		return err
 	}
 	for _, field := range fields {
+		if stopped(ctx, *issues) {
+			return nil
+		}
 		if nilValue(field) {
 			return &ConfigurationError{Path: renderPath(prefix), Problem: "nil field"}
 		}
@@ -87,6 +80,7 @@ func renderPath(path []string) string {
 type step[T any] struct {
 	rule     Rule[T]
 	required bool
+	bail     bool
 	message  *string
 	problem  string
 }
@@ -139,6 +133,8 @@ func (f field[T]) run(ctx context.Context, prefix []string, issues *[]Issue) (bo
 			return false, &ConfigurationError{Path: path, Problem: s.problem}
 		}
 	}
+	valid := true
+	policy := settings(ctx)
 	for _, required := range []bool{true, false} {
 		for _, s := range f.steps {
 			if s.required != required {
@@ -171,11 +167,20 @@ func (f field[T]) run(ctx context.Context, prefix []string, issues *[]Issue) (bo
 			if s.message != nil {
 				message = *s.message
 			}
-			*issues = append(*issues, Issue{Path: path, Code: failure.Code(), Message: message, Parameters: failure.Parameters()})
-			return false, nil
+			issue := Issue{Path: path, Code: failure.Code(), Message: message, Parameters: failure.Parameters()}
+			if s.message == nil && policy.formatter != nil {
+				formatted := issue
+				formatted.Parameters = failure.Parameters()
+				issue.Message = policy.formatter(formatted)
+			}
+			*issues = append(*issues, issue)
+			valid = false
+			if s.required || s.bail || !policy.collectAll || policy.stopFirst {
+				return false, nil
+			}
 		}
 	}
-	return true, nil
+	return valid, nil
 }
 
 // ruleViolation preserves operational errors even when joined with input failures.

@@ -119,6 +119,9 @@ func (b MapField[T]) evaluate(ctx context.Context, prefix []string, issues *[]Is
 	sort.Strings(keys)
 	for _, key := range keys {
 		for _, children := range b.each {
+			if stopped(ctx, *issues) {
+				return nil
+			}
 			if err := ctx.Err(); err != nil {
 				return err
 			}

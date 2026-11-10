@@ -16,7 +16,7 @@ type NumberField[T Numeric] struct{ f field[T] }
 // Number starts a deferred chain for a borrowed application value.
 func Number[T Numeric](path string, value T) NumberField[T] {
 	f := NumberField[T]{f: field[T]{path: path, value: value}}
-	f.f = f.f.using(constraint[T]("finite", "must be finite", nil, finite[T]))
+	f.f = f.f.add(step[T]{bail: true, rule: constraint[T]("finite", "must be finite", nil, finite[T])})
 	return f
 }
 
