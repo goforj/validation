@@ -19,11 +19,11 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 
 | Feature | What it provides |
 | :--- | :--- |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Typed chains | String, number, boolean, time, slice, map, and domain-value builders expose relevant operations. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Reusable rules | Compose reusable rules and plug in custom validator types or functions without global registration. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Format checks | Check email, URL, UUID, ULID, network values, encodings, dates, and character classes directly in the fluent chain. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Field errors | Ordered paths, stable codes, configurable collection, localized messages, and separate operational errors. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Optional inputs | Distinguish omitted properties, explicit null, and supplied zero values without eager callbacks. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Typed&nbsp;chains | Typed builders for strings, numbers, booleans, time, and collections. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Reusable&nbsp;rules | Compose rules and plug in custom validators without global registration. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Format&nbsp;checks | Common formats and character checks directly in the fluent chain. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Field&nbsp;errors | Ordered paths, stable codes, custom messages, and localization hooks. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Optional&nbsp;inputs | Distinguish omitted fields, explicit null, and supplied zero values. |
 
 ## Quick start
 
