@@ -1,6 +1,6 @@
 # Release review
 
-The release target is the standalone root module, github.com/goforj/validation. The docs module is repository tooling. The November 10 review covers the original core and the accepted breadth expansion in the [design record](../DESIGN.md#accepted-breadth-expansion). Existing public calls retain their defaults, module layout, and minimum Go language version of 1.24.
+The release target is the standalone root module, github.com/goforj/validation. The docs module is repository tooling. The November 10 review covers the standalone API documented in [validation contracts](contracts.md). Existing public calls retain their defaults, module layout, and minimum Go language version of 1.24.
 
 ## Review passes
 

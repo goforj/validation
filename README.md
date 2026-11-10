@@ -687,6 +687,6 @@ make generate
 make check-generated
 ```
 
-The root module contains the library and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [the design record](DESIGN.md) for the research behind the API.
+The root module contains the library and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [validation contracts](docs/contracts.md) for API behavior.
 
 The [initial release review](docs/release-readiness.md) records the review passes, fixes, and verification evidence.
