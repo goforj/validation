@@ -13,31 +13,32 @@ import (
 
 // section associates an application-facing API with its authoritative program snippets.
 type section struct {
-	group    string
-	apis     []string
-	program  string
-	snippets []string
+	group       string
+	apis        []string
+	program     string
+	snippets    []string
+	description string
 }
 
 // sections curates consumer operations rather than enumerating implementation plumbing.
 var sections = []section{
-	{"Values", []string{"String", "Number", "Bool", "Validate"}, "quickstart", []string{"quickstart"}},
-	{"Formats", []string{"IsEmail", "IsURL", "IsUUID", "IsUUIDv4", "IsUUIDv7", "IsIP", "IsIPv4", "IsIPv6", "IsJSON", "IsBase64"}, "formats", []string{"formats"}},
-	{"Conditions", []string{"When"}, "patch", []string{"patch"}},
-	{"Collections", []string{"Group", "Slice", "Each"}, "nested", []string{"nested"}},
-	{"Custom rules", []string{"Using", "Invalid"}, "custom", []string{"custom_type", "custom"}},
-	{"Context", []string{"ValidateContext", "Check"}, "context", []string{"context"}},
-	{"Domain values", []string{"Value", "RuleFunc", "ContextRuleFunc"}, "domain", []string{"domain"}},
-	{"Errors", []string{"Label", "Message", "First", "Messages", "Issues"}, "errors", []string{"errors"}},
-	{"Constraints", []string{"Required", "RequiredIf", "NotBlank", "Min", "Max", "In", "Equal", "Match", "Accepted"}, "constraints", []string{"constraints"}},
-	{"Text constraints", []string{"Len", "Contains", "NotContains", "StartsWith", "EndsWith", "NotEqual", "NotIn"}, "advanced", []string{"text"}},
-	{"Numeric constraints", []string{"GreaterThan", "LessThan", "MultipleOf"}, "advanced", []string{"numbers"}},
-	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"collection_rules"}},
-	{"Dates and times", []string{"Time", "Before", "After", "IsDate", "IsDateIn"}, "time", []string{"time"}},
-	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence"}},
-	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}},
-	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}},
-	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}},
+	{"Values", []string{"String", "Number", "Bool", "Validate"}, "quickstart", []string{"quickstart"}, ""},
+	{"Formats", []string{"IsEmail", "IsURL", "IsUUID", "IsUUIDv4", "IsUUIDv7", "IsIP", "IsIPv4", "IsIPv6", "IsJSON", "IsBase64"}, "formats", []string{"formats"}, ""},
+	{"Conditions", []string{"When"}, "patch", []string{"patch"}, ""},
+	{"Collections", []string{"Group", "Slice", "Each"}, "nested", []string{"nested"}, ""},
+	{"Custom rules", []string{"Using", "Invalid"}, "custom", []string{"custom_type", "custom"}, ""},
+	{"Context", []string{"ValidateContext", "Check"}, "context", []string{"context"}, ""},
+	{"Domain values", []string{"Value", "RuleFunc", "ContextRuleFunc"}, "domain", []string{"domain"}, ""},
+	{"Errors", []string{"Label", "Message", "First", "Messages", "Issues"}, "errors", []string{"errors"}, ""},
+	{"Constraints", []string{"Required", "RequiredIf", "NotBlank", "Min", "Max", "In", "Equal", "Match", "Accepted"}, "constraints", []string{"constraints"}, "StringField.Required"},
+	{"Text constraints", []string{"Len", "Contains", "NotContains", "StartsWith", "EndsWith", "NotEqual", "NotIn"}, "advanced", []string{"text"}, ""},
+	{"Numeric constraints", []string{"GreaterThan", "LessThan", "MultipleOf"}, "advanced", []string{"numbers"}, ""},
+	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"collection_rules"}, ""},
+	{"Dates and times", []string{"Time", "Before", "After", "IsDate", "IsDateIn"}, "time", []string{"time"}, ""},
+	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence"}, ""},
+	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}, ""},
+	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}, ""},
+	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}, ""},
 }
 
 // main fails visibly rather than leaving stale generated documentation on disk.
@@ -115,7 +116,14 @@ func render(root string, entries []section) (string, error) {
 			fmt.Fprintf(&examples, "<a id=\"%s\"></a>\n\n", anchor)
 		}
 		fmt.Fprintf(&index, "| **%s** | %s |\n", entry.group, strings.Join(links, " · "))
-		fmt.Fprintf(&examples, "### %s\n\n%s\n\n```go\n%s```\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[entry.apis[0]]), code.String())
+		description := entry.description
+		if description == "" {
+			description = entry.apis[0]
+		}
+		if symbols[description] == "" {
+			return "", fmt.Errorf("missing GoDoc description %s", description)
+		}
+		fmt.Fprintf(&examples, "### %s\n\n%s\n\n```go\n%s```\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[description]), code.String())
 		if !programs[entry.program] {
 			fmt.Fprintf(&sources, "- [%s](%s)\n", entry.program, path)
 			programs[entry.program] = true
@@ -158,6 +166,21 @@ func readSymbols(root string) (map[string]string, error) {
 			case *ast.FuncDecl:
 				if d.Doc != nil {
 					result[d.Name.Name] = d.Doc.Text()
+					if d.Recv != nil {
+						receiver := d.Recv.List[0].Type
+						if pointer, ok := receiver.(*ast.StarExpr); ok {
+							receiver = pointer.X
+						}
+						switch typed := receiver.(type) {
+						case *ast.IndexExpr:
+							receiver = typed.X
+						case *ast.IndexListExpr:
+							receiver = typed.X
+						}
+						if named, ok := receiver.(*ast.Ident); ok {
+							result[named.Name+"."+d.Name.Name] = d.Doc.Text()
+						}
+					}
 				}
 			case *ast.GenDecl:
 				for _, spec := range d.Specs {

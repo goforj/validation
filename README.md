@@ -384,7 +384,7 @@ if errors.As(err, &failures) {
 
 ### Required · RequiredIf · NotBlank · Min · Max · In · Equal · Match · Accepted
 
-Required rejects the zero time before content rules run.
+Required rejects an empty string before content rules run.
 
 ```go
 err := validation.Validate(

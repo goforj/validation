@@ -90,7 +90,7 @@ func TestGenerate(t *testing.T) {
 
 // TestSourceErrors protects generation from missing and malformed authoritative inputs.
 func TestSourceErrors(t *testing.T) {
-	for _, name := range []string{"root", "source", "template", "program", "snippet", "syntax", "symbol", "demonstration", "duplicate", "marker", "write"} {
+	for _, name := range []string{"root", "source", "template", "program", "snippet", "syntax", "symbol", "description", "demonstration", "duplicate", "marker", "write"} {
 		t.Run(name, func(t *testing.T) {
 			root := fixture(t)
 			entries := sections
@@ -104,15 +104,17 @@ func TestSourceErrors(t *testing.T) {
 					t.Fatal(err)
 				}
 			case "program":
-				entries = []section{{"Values", []string{"String"}, "missing", []string{"quickstart"}}}
+				entries = []section{{"Values", []string{"String"}, "missing", []string{"quickstart"}, ""}}
 			case "snippet":
 				write(t, filepath.Join(root, "examples", "quickstart", "main.go"), "package main")
 			case "syntax":
 				write(t, filepath.Join(root, "examples", "quickstart", "main.go"), "// snippet:quickstart\n???\n// endsnippet:quickstart\n")
 			case "symbol":
-				entries = []section{{"Values", []string{"Missing"}, "quickstart", []string{"quickstart"}}}
+				entries = []section{{"Values", []string{"Missing"}, "quickstart", []string{"quickstart"}, ""}}
+			case "description":
+				entries = []section{{"Values", []string{"String"}, "quickstart", []string{"quickstart"}, "Missing.Method"}}
 			case "demonstration":
-				entries = []section{{"Values", []string{"Match"}, "quickstart", []string{"quickstart"}}}
+				entries = []section{{"Values", []string{"Match"}, "quickstart", []string{"quickstart"}, ""}}
 			case "duplicate":
 				entries = append(append([]section(nil), sections...), sections[0])
 			case "marker":
@@ -172,5 +174,27 @@ func TestCalls(t *testing.T) {
 	found, err := calls("validation.String(\"name\", \"Ada\").Required()")
 	if err != nil || !found["String"] || !found["Required"] || found["Email"] {
 		t.Fatalf("%v: %v", found, err)
+	}
+}
+
+// TestReceiverDocumentation prevents same-named methods from replacing unrelated example prose.
+func TestReceiverDocumentation(t *testing.T) {
+	symbols, err := readSymbols("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"StringField.Required", "TimeField.Required", "Input.UnmarshalJSON", "uniqueRule.ValidateContext"} {
+		if symbols[name] == "" {
+			t.Errorf("missing receiver-qualified documentation: %s", name)
+		}
+	}
+	output, err := render("../..", sections)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, after, _ := strings.Cut(output, "### Required · RequiredIf")
+	description, _, _ := strings.Cut(after, "```go")
+	if !strings.Contains(description, symbols["StringField.Required"]) || strings.Contains(description, "zero time") {
+		t.Fatal(description)
 	}
 }
