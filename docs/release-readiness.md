@@ -15,7 +15,7 @@ The original URL correction rejects malformed values that earlier revisions acce
 
 ## Verification
 
-The [quality report](quality.json) records the tested source fingerprint, platform, toolchain, exact statement counts, and executed Go tests and seeds. Unit coverage is enforced at 100% for the runtime, examples, and documentation tooling. Six Python tests separately verify the coverage-reporting gates. Concurrent reuse is exercised under the race detector, including the new builders, composed rules, and branched validator policies.
+The [quality report](quality.json) records the tested source fingerprint, platform, toolchain, exact statement counts, and executed Go tests and seeds. Unit coverage is enforced at 100% for the runtime, examples, and documentation tooling. Python tests separately verify the coverage-reporting gates and public-consumer cache and proxy isolation. Concurrent reuse is exercised under the race detector, including the new builders, composed rules, and branched validator policies.
 
 Both modules were tested and vetted on Go 1.24.0, the first version allowed by the module directive. Race tests, vet, module inventory, generated parity, and vulnerability checks also ran on Go 1.27.3. Public-consumer verification resolves the pushed revision through the public Go proxy and checksum database in a fresh module cache, rejects local replacements, and executes all canonical examples outside the checkout. CI repeats that check on the minimum Go line and stable Go. Inspect the chosen revision's [CI](https://github.com/goforj/validation/actions/workflows/ci.yml), [Security](https://github.com/goforj/validation/actions/workflows/security.yml), and [Codecov](https://app.codecov.io/gh/goforj/validation) results before tagging.
 
