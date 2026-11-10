@@ -284,7 +284,7 @@ func currencySelectors(symbols map[string]string) (string, error) {
 		if len(groups[initial]) == 0 {
 			initials = append(initials, initial)
 		}
-		groups[initial] = append(groups[initial], "`."+code+"()`")
+		groups[initial] = append(groups[initial], "."+code+"()")
 	}
 	var output strings.Builder
 	fmt.Fprintf(&output, "<details>\n<summary>All %d currency selectors</summary>\n\n| Initial | Selectors |\n| :--- | :--- |\n", len(codes))

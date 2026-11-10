@@ -210,7 +210,7 @@ func TestCurrencySelectorList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(output, "All 3 currency selectors") || !strings.Contains(output, "| U | `.UGX()` · `.USD()` |") || strings.Contains(output, "GBP") || strings.Contains(output, "Min") {
+	if !strings.Contains(output, "All 3 currency selectors") || !strings.Contains(output, "| U | .UGX() · .USD() |") || strings.Contains(output, "GBP") || strings.Contains(output, "Min") {
 		t.Fatal(output)
 	}
 	if strings.Index(output, "| E |") > strings.Index(output, "| U |") {
@@ -238,7 +238,7 @@ func TestCurrencySelectorList(t *testing.T) {
 			continue
 		}
 		count++
-		if strings.Count(output, "`."+code+"()`") != 1 {
+		if strings.Count(output, "."+code+"()") != 1 {
 			t.Errorf("selector %s missing or repeated", code)
 		}
 	}

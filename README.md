@@ -747,32 +747,32 @@ Each method adds an accepted currency to the same allowlist.
 
 | Initial | Selectors |
 | :--- | :--- |
-| A | `.AED()` · `.AFN()` · `.ALL()` · `.AMD()` · `.AOA()` · `.ARS()` · `.AUD()` · `.AWG()` · `.AZN()` |
-| B | `.BAM()` · `.BBD()` · `.BDT()` · `.BHD()` · `.BIF()` · `.BMD()` · `.BND()` · `.BOB()` · `.BOV()` · `.BRL()` · `.BSD()` · `.BTN()` · `.BWP()` · `.BYN()` · `.BZD()` |
-| C | `.CAD()` · `.CDF()` · `.CHE()` · `.CHF()` · `.CHW()` · `.CLF()` · `.CLP()` · `.CNY()` · `.COP()` · `.COU()` · `.CRC()` · `.CUP()` · `.CVE()` · `.CZK()` |
-| D | `.DJF()` · `.DKK()` · `.DOP()` · `.DZD()` |
-| E | `.EGP()` · `.ERN()` · `.ETB()` · `.EUR()` |
-| F | `.FJD()` · `.FKP()` |
-| G | `.GBP()` · `.GEL()` · `.GHS()` · `.GIP()` · `.GMD()` · `.GNF()` · `.GTQ()` · `.GYD()` |
-| H | `.HKD()` · `.HNL()` · `.HTG()` · `.HUF()` |
-| I | `.IDR()` · `.ILS()` · `.INR()` · `.IQD()` · `.IRR()` · `.ISK()` |
-| J | `.JMD()` · `.JOD()` · `.JPY()` |
-| K | `.KES()` · `.KGS()` · `.KHR()` · `.KMF()` · `.KPW()` · `.KRW()` · `.KWD()` · `.KYD()` · `.KZT()` |
-| L | `.LAK()` · `.LBP()` · `.LKR()` · `.LRD()` · `.LSL()` · `.LYD()` |
-| M | `.MAD()` · `.MDL()` · `.MGA()` · `.MKD()` · `.MMK()` · `.MNT()` · `.MOP()` · `.MRU()` · `.MUR()` · `.MVR()` · `.MWK()` · `.MXN()` · `.MXV()` · `.MYR()` · `.MZN()` |
-| N | `.NAD()` · `.NGN()` · `.NIO()` · `.NOK()` · `.NPR()` · `.NZD()` |
-| O | `.OMR()` |
-| P | `.PAB()` · `.PEN()` · `.PGK()` · `.PHP()` · `.PKR()` · `.PLN()` · `.PYG()` |
-| Q | `.QAR()` |
-| R | `.RON()` · `.RSD()` · `.RUB()` · `.RWF()` |
-| S | `.SAR()` · `.SBD()` · `.SCR()` · `.SDG()` · `.SEK()` · `.SGD()` · `.SHP()` · `.SLE()` · `.SOS()` · `.SRD()` · `.SSP()` · `.STN()` · `.SVC()` · `.SYP()` · `.SZL()` |
-| T | `.THB()` · `.TJS()` · `.TMT()` · `.TND()` · `.TOP()` · `.TRY()` · `.TTD()` · `.TWD()` · `.TZS()` |
-| U | `.UAH()` · `.UGX()` · `.USD()` · `.USN()` · `.UYI()` · `.UYU()` · `.UYW()` · `.UZS()` |
-| V | `.VED()` · `.VES()` · `.VND()` · `.VUV()` |
-| W | `.WST()` |
-| X | `.XAD()` · `.XAF()` · `.XAG()` · `.XAU()` · `.XBA()` · `.XBB()` · `.XBC()` · `.XBD()` · `.XCD()` · `.XCG()` · `.XDR()` · `.XOF()` · `.XPD()` · `.XPF()` · `.XPT()` · `.XSU()` · `.XTS()` · `.XUA()` · `.XXX()` |
-| Y | `.YER()` |
-| Z | `.ZAR()` · `.ZMW()` · `.ZWG()` |
+| A | .AED() · .AFN() · .ALL() · .AMD() · .AOA() · .ARS() · .AUD() · .AWG() · .AZN() |
+| B | .BAM() · .BBD() · .BDT() · .BHD() · .BIF() · .BMD() · .BND() · .BOB() · .BOV() · .BRL() · .BSD() · .BTN() · .BWP() · .BYN() · .BZD() |
+| C | .CAD() · .CDF() · .CHE() · .CHF() · .CHW() · .CLF() · .CLP() · .CNY() · .COP() · .COU() · .CRC() · .CUP() · .CVE() · .CZK() |
+| D | .DJF() · .DKK() · .DOP() · .DZD() |
+| E | .EGP() · .ERN() · .ETB() · .EUR() |
+| F | .FJD() · .FKP() |
+| G | .GBP() · .GEL() · .GHS() · .GIP() · .GMD() · .GNF() · .GTQ() · .GYD() |
+| H | .HKD() · .HNL() · .HTG() · .HUF() |
+| I | .IDR() · .ILS() · .INR() · .IQD() · .IRR() · .ISK() |
+| J | .JMD() · .JOD() · .JPY() |
+| K | .KES() · .KGS() · .KHR() · .KMF() · .KPW() · .KRW() · .KWD() · .KYD() · .KZT() |
+| L | .LAK() · .LBP() · .LKR() · .LRD() · .LSL() · .LYD() |
+| M | .MAD() · .MDL() · .MGA() · .MKD() · .MMK() · .MNT() · .MOP() · .MRU() · .MUR() · .MVR() · .MWK() · .MXN() · .MXV() · .MYR() · .MZN() |
+| N | .NAD() · .NGN() · .NIO() · .NOK() · .NPR() · .NZD() |
+| O | .OMR() |
+| P | .PAB() · .PEN() · .PGK() · .PHP() · .PKR() · .PLN() · .PYG() |
+| Q | .QAR() |
+| R | .RON() · .RSD() · .RUB() · .RWF() |
+| S | .SAR() · .SBD() · .SCR() · .SDG() · .SEK() · .SGD() · .SHP() · .SLE() · .SOS() · .SRD() · .SSP() · .STN() · .SVC() · .SYP() · .SZL() |
+| T | .THB() · .TJS() · .TMT() · .TND() · .TOP() · .TRY() · .TTD() · .TWD() · .TZS() |
+| U | .UAH() · .UGX() · .USD() · .USN() · .UYI() · .UYU() · .UYW() · .UZS() |
+| V | .VED() · .VES() · .VND() · .VUV() |
+| W | .WST() |
+| X | .XAD() · .XAF() · .XAG() · .XAU() · .XBA() · .XBB() · .XBC() · .XBD() · .XCD() · .XCG() · .XDR() · .XOF() · .XPD() · .XPF() · .XPT() · .XSU() · .XTS() · .XUA() · .XXX() |
+| Y | .YER() |
+| Z | .ZAR() · .ZMW() · .ZWG() |
 
 </details>
 
