@@ -33,6 +33,8 @@ var sections = []section{
 	{"Text constraints", []string{"Len", "Contains", "NotContains", "StartsWith", "EndsWith", "NotEqual", "NotIn"}, "advanced", []string{"text"}},
 	{"Numeric constraints", []string{"GreaterThan", "LessThan", "MultipleOf"}, "advanced", []string{"numbers"}},
 	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"collection_rules"}},
+	{"Dates and times", []string{"Time", "Before", "After", "IsDate", "IsDateIn"}, "time", []string{"time"}},
+	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence"}},
 }
 
 // main fails visibly rather than leaving stale generated documentation on disk.

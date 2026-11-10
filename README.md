@@ -85,6 +85,8 @@ Complete programs:
 - [errors](examples/errors/main.go)
 - [constraints](examples/constraints/main.go)
 - [advanced](examples/advanced/main.go)
+- [time](examples/time/main.go)
+- [presence](examples/presence/main.go)
 
 ## API index
 
@@ -102,6 +104,8 @@ Complete programs:
 | **Text constraints** | [Len](#len) · [Contains](#contains) · [NotContains](#notcontains) · [StartsWith](#startswith) · [EndsWith](#endswith) · [NotEqual](#notequal) · [NotIn](#notin) |
 | **Numeric constraints** | [GreaterThan](#greaterthan) · [LessThan](#lessthan) · [MultipleOf](#multipleof) |
 | **Collection constraints** | [Map](#map) · [Unique](#unique) · [UniqueBy](#uniqueby) · [HasKey](#haskey) · [OnlyKeys](#onlykeys) |
+| **Dates and times** | [Time](#time) · [Before](#before) · [After](#after) · [IsDate](#isdate) · [IsDateIn](#isdatein) |
+| **Optional inputs** | [Presence](#presence) · [Nullable](#nullable) · [Optional](#optional) · [Provided](#provided) · [Null](#null) · [IsPresent](#ispresent) · [IsNull](#isnull) · [Get](#get) |
 
 ## Values
 
@@ -374,7 +378,7 @@ if errors.As(err, &failures) {
 
 ### Required · RequiredIf · NotBlank · Min · Max · In · Equal · Match · Accepted
 
-Required rejects an empty string before content rules run.
+Required rejects the zero time before content rules run.
 
 ```go
 err := validation.Validate(
@@ -470,6 +474,87 @@ err = validation.Validate(
 		}),
 )
 fmt.Println(err)
+// <nil>
+
+```
+
+## Dates and times
+
+<a id="time"></a>
+
+<a id="before"></a>
+
+<a id="after"></a>
+
+<a id="isdate"></a>
+
+<a id="isdatein"></a>
+
+### Time · Before · After · IsDate · IsDateIn
+
+Time starts a deferred chain using instant comparisons across time zones.
+
+```go
+starts := time.Date(2026, 11, 10, 10, 0, 0, 0, time.UTC)
+ends := starts.Add(2 * time.Hour)
+fmt.Println(validation.Validate(
+	validation.Time("starts_at", starts).Required().Before(ends).Min(starts).Max(ends).Equal(starts),
+	validation.Time("ends_at", ends).After(starts),
+	validation.String("date", "2026-11-10").IsDate(time.DateOnly),
+	validation.String("local_time", "2026-11-10 10:00").IsDateIn("2006-01-02 15:04", time.UTC),
+))
+// <nil>
+
+```
+
+## Optional inputs
+
+<a id="presence"></a>
+
+<a id="nullable"></a>
+
+<a id="optional"></a>
+
+<a id="provided"></a>
+
+<a id="null"></a>
+
+<a id="ispresent"></a>
+
+<a id="isnull"></a>
+
+<a id="get"></a>
+
+### Presence · Nullable · Optional · Provided · Null · IsPresent · IsNull · Get
+
+Presence defers child validation until input contains a non-null value.
+Use an empty child path to retain path, or a named child to append a segment.
+
+```go
+// nonBlank shares a content rule across optional and presence-aware inputs.
+func nonBlank(value string) validation.Field { return validation.String("", value).NotBlank() }
+
+var patch struct {
+	Seats validation.Input[int]    `json:"seats,omitzero"`
+	Name  validation.Input[string] `json:"name,omitzero"`
+}
+fmt.Println(json.Unmarshal([]byte(`{"seats":0,"name":null}`), &patch))
+// <nil>
+fmt.Println(validation.Validate(
+	validation.Presence("seats", patch.Seats, func(v int) validation.Field { return validation.Number("", v).Min(0) }).Required(),
+	validation.Presence("name", patch.Name, nonBlank).Nullable(),
+))
+// <nil>
+fmt.Println(patch.Seats.IsPresent(), patch.Name.IsNull())
+// true true
+value, ok := validation.Provided(false).Get()
+fmt.Println(value, ok, validation.Null[string]().IsNull())
+// false true true
+var nickname *string
+fmt.Println(validation.Validate(validation.Optional(nickname, nonBlank)))
+// <nil>
+name := "Ada"
+fmt.Println(validation.Validate(validation.Optional(&name, nonBlank), validation.Presence("name", validation.Provided(name), nonBlank)))
 // <nil>
 
 ```

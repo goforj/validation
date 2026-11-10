@@ -48,3 +48,13 @@ Builders own their constraint slices and presentation configuration. Extending a
 Cancellation is checked before evaluation, between fields and rules, and after callbacks. Validate uses a background context, and ValidateContext normalizes a nil context to a background context. Dependent rules must honor the supplied context during blocking work. Panics from application callbacks propagate normally.
 
 Input-size limits remain application policy. Put Max before IsJSON, IsBase64, or a custom Check when an endpoint has a size bound, since content rules run in declaration order. Base64 validation uses fixed scratch storage without retaining decoded data. Slice checks without Each inspect the parent constraints without traversing elements.
+
+## Dates and optional inputs
+
+`Time` compares instants using Go's `time.Time` comparison methods. `Before` and `After` are exclusive; `Min` and `Max` are inclusive. `Required` rejects the zero time. Bounds belong to the caller; the library does not read the clock. `IsDate` parses a Go time layout in UTC, and `IsDateIn` uses the supplied location for unzoned strings. These checks preserve Go's parser behavior and do not normalize the input.
+
+`Optional` skips a nil pointer and invokes its callback lazily for an existing value. A nil callback is a configuration error, including when the value is absent.
+
+`Input[T]` preserves three states: its zero value is absent, `Null[T]()` is explicit null, and `Provided(value)` is a supplied non-null value. JSON decoding changes an input only after successful parsing. Decode into a fresh request value for each request; as with ordinary Go struct fields, decoding an omitted property does not reset existing state. `Get` reports true for supplied zero values such as `0` and `false`. JSON marshaling emits null for absent inputs unless the enclosing property uses `omitzero`, supported by the minimum Go version.
+
+`Presence` skips missing inputs by default, rejects explicit null, and validates supplied values lazily. `Nullable` permits explicit null. `Required` always requires a supplied, non-null value, including on a nullable chain. It permits supplied zero values; apply content rules inside the callback when those should fail. An empty child path inherits the presence path. `Label` and `Message` on the presence chain affect presence failures; child builders own their content messages. A nil callback is always a configuration error. Presence distinguishes supplied JSON values, not application-specific notions of emptiness inside arbitrary domain types.
