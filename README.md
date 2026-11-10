@@ -19,7 +19,7 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 
 | Feature | What it provides |
 | :--- | :--- |
-| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Typed&nbsp;chains | Typed builders for strings, numbers, booleans, time, and collections. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Typed&nbsp;chains | Typed builders for text, numbers, exact decimals, time, and collections. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Reusable&nbsp;rules | Compose rules and plug in custom validators without global registration. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Format&nbsp;checks | Common formats and character checks directly in the fluent chain. |
 | <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle">&nbsp;Field&nbsp;errors | Ordered paths, stable codes, custom messages, and localization hooks. |
@@ -32,6 +32,8 @@ Requires Go 1.24 or newer.
 ```sh
 go get github.com/goforj/validation@v0.1.0
 ```
+
+For the unreleased exact-decimal API, use `go get github.com/goforj/validation@main`.
 
 The complete [registration program](examples/quickstart/main.go) defines the Registration model and imports the library:
 
@@ -66,7 +68,7 @@ See [validation contracts](docs/contracts.md) for presence, formats, paths, conf
 
 Run from the repository root with `go run ./examples/<name>`. Tests verify every program's output.
 
-[quickstart](examples/quickstart/main.go) · [formats](examples/formats/main.go) · [patch](examples/patch/main.go) · [nested](examples/nested/main.go) · [custom](examples/custom/main.go) · [context](examples/context/main.go) · [domain](examples/domain/main.go) · [errors](examples/errors/main.go) · [constraints](examples/constraints/main.go) · [advanced](examples/advanced/main.go) · [time](examples/time/main.go) · [presence](examples/presence/main.go) · [moreformats](examples/moreformats/main.go) · [policies](examples/policies/main.go)
+[quickstart](examples/quickstart/main.go) · [formats](examples/formats/main.go) · [patch](examples/patch/main.go) · [nested](examples/nested/main.go) · [custom](examples/custom/main.go) · [context](examples/context/main.go) · [domain](examples/domain/main.go) · [errors](examples/errors/main.go) · [constraints](examples/constraints/main.go) · [advanced](examples/advanced/main.go) · [time](examples/time/main.go) · [presence](examples/presence/main.go) · [moreformats](examples/moreformats/main.go) · [policies](examples/policies/main.go) · [decimal](examples/decimal/main.go)
 
 ## API index
 
@@ -89,6 +91,7 @@ Run from the repository root with `go run ./examples/<name>`. Tests verify every
 | **More formats** | [IsULID](#isulid) · [IsHostname](#ishostname) · [IsCIDR](#iscidr) · [IsMAC](#ismac) · [IsE164](#ise164) · [IsBase64URL](#isbase64url) · [IsAlpha](#isalpha) · [IsAlphanumeric](#isalphanumeric) · [IsDigits](#isdigits) · [IsASCII](#isascii) · [IsLowercase](#islowercase) · [IsUppercase](#isuppercase) · [IsUTF8](#isutf8) |
 | **Composition** | [Any](#any) · [All](#all) · [Not](#not) |
 | **Evaluation policy** | [New](#new) · [CollectAll](#collectall) · [StopOnFirstError](#stoponfirsterror) · [FormatMessages](#formatmessages) |
+| **Exact decimals** | [Decimal](#decimal) · [MaxScale](#maxscale) |
 
 ## Values
 
@@ -670,6 +673,50 @@ fmt.Println(first.ValidateContext(
 	validation.Number("age", 0).Min(18),
 ))
 // name: required
+
+```
+
+## Exact decimals
+
+<a id="decimal"></a>
+
+<a id="maxscale"></a>
+
+### Decimal · MaxScale
+
+Decimal starts a deferred chain for signed decimal text without exponent notation.
+Values require ASCII integer digits and may include a fractional part with digits after the point.
+
+```go
+// Currency is the application's currency-code type; validation maintains no currency registry.
+type Currency string
+
+const (
+	// USD is an application-supported currency code.
+	USD Currency = "USD"
+	// EUR is an application-supported currency code.
+	EUR Currency = "EUR"
+)
+
+// Invoice preserves decimal text and a typed currency code after application decoding.
+type Invoice struct {
+	Amount   json.Number
+	Currency Currency
+}
+
+invoice := Invoice{Amount: json.Number("1234.50"), Currency: USD}
+fmt.Println(validation.Validate(
+	validation.Decimal("amount", invoice.Amount).
+		Required().Min("0.01").Max("999999.99").MaxScale(2),
+	validation.String("currency", invoice.Currency).In(USD, EUR),
+))
+// <nil>
+fmt.Println(validation.Validate(
+	validation.Decimal("amount", "9007199254740993.01").
+		GreaterThan("9007199254740993").LessThan("9007199254740994").
+		Equal("9007199254740993.010"),
+))
+// <nil>
 
 ```
 

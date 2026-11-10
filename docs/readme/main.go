@@ -39,6 +39,7 @@ var sections = []section{
 	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}, ""},
 	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}, ""},
 	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}, ""},
+	{"Exact decimals", []string{"Decimal", "MaxScale"}, "decimal", []string{"decimal_types", "decimal"}, ""},
 }
 
 // main fails visibly rather than leaving stale generated documentation on disk.
