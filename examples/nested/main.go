@@ -24,17 +24,11 @@ func main() {
 			validation.String("city", "").Required(),
 		),
 
-		validation.Slice("items", items).
-			Required().
-			Max(100).
+		validation.Slice("items", items).Required().Max(100).
 			Each(func(item Item) []validation.Field {
 				return []validation.Field{
-					validation.String("sku", item.SKU).
-						Required(),
-					validation.Number(
-						"quantity",
-						item.Quantity,
-					).Min(1),
+					validation.String("sku", item.SKU).Required(),
+					validation.Number("quantity", item.Quantity).Min(1),
 				}
 			}),
 	)

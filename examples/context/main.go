@@ -15,14 +15,11 @@ func main() {
 
 	err := validation.ValidateContext(
 		context.Background(),
-		validation.String("email", "ada@example.com").
-			IsEmail().
-			Check(
-				func(ctx context.Context, v string) error {
-					// A client would use ctx and v.
-					return unavailable
-				},
-			),
+		validation.String("email", "ada@example.com").IsEmail().
+			Check(func(ctx context.Context, email string) error {
+				// A client would use ctx and email.
+				return unavailable
+			}),
 	)
 
 	fmt.Println(errors.Is(err, unavailable))

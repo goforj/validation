@@ -14,11 +14,7 @@ func main() {
 
 	// snippet:currency
 	err := validation.Validate(
-		validation.Currency("currency", request.Currency).
-			Required().
-			USD().
-			EUR().
-			GBP(),
+		validation.Currency("currency", request.Currency).Required().USD().EUR().GBP(),
 	)
 
 	fmt.Println(err)

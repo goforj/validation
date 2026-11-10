@@ -44,14 +44,9 @@ req := Registration{
 }
 
 err := validation.Validate(
-	validation.String("name", req.Name).
-		Required().
-		Min(2).
-		Max(100),
+	validation.String("name", req.Name).Required().Min(2).Max(100),
 
-	validation.String("email", req.Email).
-		Required().
-		IsEmail(),
+	validation.String("email", req.Email).Required().IsEmail(),
 
 	validation.Number("age", req.Age).Min(18),
 	validation.Bool("terms", req.Terms).Accepted(),
@@ -123,14 +118,9 @@ req := Registration{
 }
 
 err := validation.Validate(
-	validation.String("name", req.Name).
-		Required().
-		Min(2).
-		Max(100),
+	validation.String("name", req.Name).Required().Min(2).Max(100),
 
-	validation.String("email", req.Email).
-		Required().
-		IsEmail(),
+	validation.String("email", req.Email).Required().IsEmail(),
 
 	validation.Number("age", req.Age).Min(18),
 	validation.Bool("terms", req.Terms).Accepted(),
@@ -171,24 +161,18 @@ uuidV4 := "550e8400-e29b-41d4-a716-446655440000"
 uuidV7 := "0190bde7-5ad0-7000-8000-000000000001"
 
 err := validation.Validate(
-	validation.String("email", "ada@example.com").
-		IsEmail(),
-	validation.String("site", "https://goforj.dev").
-		IsURL(),
+	validation.String("email", "ada@example.com").IsEmail(),
+	validation.String("site", "https://goforj.dev").IsURL(),
 
-	validation.String("id", uuidV4).
-		IsUUID(),
-	validation.String("trace_id", uuidV4).
-		IsUUIDv4(),
-	validation.String("request_id", uuidV7).
-		IsUUIDv7(),
+	validation.String("id", uuidV4).IsUUID(),
+	validation.String("trace_id", uuidV4).IsUUIDv4(),
+	validation.String("request_id", uuidV7).IsUUIDv7(),
 
 	validation.String("host", "::1").IsIP(),
 	validation.String("ip", "192.0.2.1").IsIPv4(),
 	validation.String("ipv6", "2001:db8::1").IsIPv6(),
 
-	validation.String("metadata", `{"source":"web"}`).
-		IsJSON(),
+	validation.String("metadata", `{"source":"web"}`).IsJSON(),
 	validation.String("cursor", "YWJj").IsBase64(),
 )
 
@@ -206,15 +190,9 @@ When evaluates the callback lazily only when condition is true.
 
 ```go
 return validation.Validate(
-	validation.When(
-		req.Email != nil,
-		func() validation.Field {
-			email := *req.Email
-			return validation.String("email", email).
-				Required().
-				IsEmail()
-		},
-	),
+	validation.When(req.Email != nil, func() validation.Field {
+		return validation.String("email", *req.Email).Required().IsEmail()
+	}),
 )
 ```
 
@@ -240,17 +218,11 @@ err := validation.Validate(
 		validation.String("city", "").Required(),
 	),
 
-	validation.Slice("items", items).
-		Required().
-		Max(100).
+	validation.Slice("items", items).Required().Max(100).
 		Each(func(item Item) []validation.Field {
 			return []validation.Field{
-				validation.String("sku", item.SKU).
-					Required(),
-				validation.Number(
-					"quantity",
-					item.Quantity,
-				).Min(1),
+				validation.String("sku", item.SKU).Required(),
+				validation.Number("quantity", item.Quantity).Min(1),
 			}
 		}),
 )
@@ -283,10 +255,7 @@ type AllowedDomain struct {
 func (r AllowedDomain) Validate(value string) error {
 	_, domain, ok := strings.Cut(value, "@")
 	if !ok || !strings.EqualFold(domain, r.Domain) {
-		return validation.Invalid(
-			"email_domain",
-			"Use your company email address.",
-		)
+		return validation.Invalid("email_domain", "Use your company email address.")
 	}
 	return nil
 }
@@ -319,14 +288,11 @@ unavailable := errors.New("directory unavailable")
 
 err := validation.ValidateContext(
 	context.Background(),
-	validation.String("email", "ada@example.com").
-		IsEmail().
-		Check(
-			func(ctx context.Context, v string) error {
-				// A client would use ctx and v.
-				return unavailable
-			},
-		),
+	validation.String("email", "ada@example.com").IsEmail().
+		Check(func(ctx context.Context, email string) error {
+			// A client would use ctx and email.
+			return unavailable
+		}),
 )
 
 fmt.Println(errors.Is(err, unavailable))
@@ -346,17 +312,12 @@ fmt.Println(errors.Is(err, unavailable))
 Value starts a deferred chain for a borrowed application value.
 
 ```go
-window := validation.RuleFunc[Delivery](
-	func(value Delivery) error {
-		if value.Days > 30 {
-			return validation.Invalid(
-				"delivery_window",
-				"Choose delivery within 30 days.",
-			)
-		}
-		return nil
-	},
-)
+window := validation.RuleFunc[Delivery](func(value Delivery) error {
+	if value.Days > 30 {
+		return validation.Invalid("delivery_window", "Choose delivery within 30 days.")
+	}
+	return nil
+})
 
 available := validation.ContextRuleFunc[Delivery](
 	func(ctx context.Context, _ Delivery) error {
@@ -365,9 +326,7 @@ available := validation.ContextRuleFunc[Delivery](
 )
 
 err := validation.Validate(
-	validation.Value("delivery", Delivery{Days: 7}).
-		Using(window).
-		Using(available),
+	validation.Value("delivery", Delivery{Days: 7}).Using(window).Using(available),
 )
 
 fmt.Println(err)
@@ -439,22 +398,13 @@ Required rejects an empty string before content rules run.
 skuPattern := regexp.MustCompile(`^[A-Z]+-\d+$`)
 
 err := validation.Validate(
-	validation.String("name", "Ada").
-		Required().
-		NotBlank().
-		Min(2).
-		Max(100),
+	validation.String("name", "Ada").Required().NotBlank().Min(2).Max(100),
 
-	validation.String("company", "").
-		RequiredIf(false).
-		Max(200),
-	validation.String("role", "member").
-		In("member", "admin"),
+	validation.String("company", "").RequiredIf(false).Max(200),
+	validation.String("role", "member").In("member", "admin"),
 
-	validation.String("confirmation", "correct horse").
-		Equal("correct horse"),
-	validation.String("sku", "BOOK-42").
-		Match(skuPattern),
+	validation.String("confirmation", "correct horse").Equal("correct horse"),
+	validation.String("sku", "BOOK-42").Match(skuPattern),
 
 	validation.Number("age", 36).Min(18).Max(120),
 	validation.Bool("terms", true).Accepted(),
@@ -487,15 +437,10 @@ Len requires exactly length Unicode code points.
 ```go
 err := validation.Validate(
 	validation.String("sku", "BOOK-42").
-		Len(7).
-		Contains("-").
-		NotContains(" ").
-		StartsWith("BOOK").
-		EndsWith("42"),
+		Len(7).Contains("-").NotContains(" ").
+		StartsWith("BOOK").EndsWith("42"),
 
-	validation.String("username", "ada").
-		NotEqual("root").
-		NotIn("admin", "system"),
+	validation.String("username", "ada").NotEqual("root").NotIn("admin", "system"),
 )
 
 fmt.Println(err)
@@ -516,10 +461,7 @@ GreaterThan requires a strict lower bound in the field's numeric type.
 
 ```go
 err := validation.Validate(
-	validation.Number("quantity", 12).
-		GreaterThan(0).
-		LessThan(100).
-		MultipleOf(3),
+	validation.Number("quantity", 12).GreaterThan(0).LessThan(100).MultipleOf(3),
 )
 
 fmt.Println(err)
@@ -556,21 +498,15 @@ products := []Product{{ID: 1}, {ID: 2}}
 labels := map[string]string{"category": "books"}
 
 err := validation.Validate(
-	validation.Slice("tags", []string{"go", "books"}).
-		Unique().
-		Contains("go"),
+	validation.Slice("tags", []string{"go", "books"}).Unique().Contains("go"),
 
 	validation.Slice("products", products).
-		Using(validation.UniqueBy(
-			func(product Product) int {
-				return product.ID
-			},
-		)),
+		Using(validation.UniqueBy(func(product Product) int {
+			return product.ID
+		})),
 
 	validation.Map("labels", labels).
-		Required().
-		HasKey("category").
-		OnlyKeys("category").
+		Required().HasKey("category").OnlyKeys("category").
 		Each(label),
 )
 
@@ -608,8 +544,7 @@ err := validation.Validate(
 
 	validation.Time("ends_at", ends).After(starts),
 
-	validation.String("date", "2026-11-10").
-		IsDate(time.DateOnly),
+	validation.String("date", "2026-11-10").IsDate(time.DateOnly),
 	validation.String("local_time", "2026-11-10 10:00").
 		IsDateIn("2006-01-02 15:04", time.UTC),
 )
@@ -660,19 +595,11 @@ fmt.Println(decodeErr)
 // <nil>
 
 err := validation.Validate(
-	validation.Presence(
-		"seats",
-		patch.Seats,
-		func(value int) validation.Field {
-			return validation.Number("", value).Min(0)
-		},
-	).Required(),
+	validation.Presence("seats", patch.Seats, func(value int) validation.Field {
+		return validation.Number("", value).Min(0)
+	}).Required(),
 
-	validation.Presence(
-		"name",
-		patch.Name,
-		nonBlank,
-	).Nullable(),
+	validation.Presence("name", patch.Name, nonBlank).Nullable(),
 )
 
 fmt.Println(err)
@@ -747,18 +674,12 @@ fmt.Println(err)
 IsULID requires a case-insensitive 128-bit ULID.
 
 ```go
-id := "01ARZ3NDEKTSV4RRFFQ69G5FAV"
-
 err := validation.Validate(
-	validation.String("id", id).
-		IsULID(),
+	validation.String("id", "01ARZ3NDEKTSV4RRFFQ69G5FAV").IsULID(),
 
-	validation.String("host", "api.example.com").
-		IsHostname(),
-	validation.String("network", "192.0.2.0/24").
-		IsCIDR(),
-	validation.String("device", "00:11:22:33:44:55").
-		IsMAC(),
+	validation.String("host", "api.example.com").IsHostname(),
+	validation.String("network", "192.0.2.0/24").IsCIDR(),
+	validation.String("device", "00:11:22:33:44:55").IsMAC(),
 
 	validation.String("phone", "+14155552671").IsE164(),
 	validation.String("token", "__8").IsBase64URL(),
@@ -795,10 +716,7 @@ startsA := validation.RuleFunc[string](
 		if strings.HasPrefix(value, "A") {
 			return nil
 		}
-		return validation.Invalid(
-			"starts_a",
-			"Must start with A",
-		)
+		return validation.Invalid("starts_a", "Must start with A")
 	},
 )
 
@@ -807,10 +725,7 @@ endsZ := validation.ContextRuleFunc[string](
 		if strings.HasSuffix(value, "Z") {
 			return nil
 		}
-		return validation.Invalid(
-			"ends_z",
-			"Must end with Z",
-		)
+		return validation.Invalid("ends_z", "Must end with Z")
 	},
 )
 
@@ -894,14 +809,9 @@ Values require ASCII integer digits and may include a fractional part with digit
 ```go
 err := validation.Validate(
 	validation.Decimal("amount", request.Amount).
-		Required().
-		Min("0.01").
-		Max("999999.99").
+		Required().Min("0.01").Max("999999.99").
 		MaxScale(2),
-	validation.Currency("currency", request.Currency).
-		Required().
-		USD().
-		EUR(),
+	validation.Currency("currency", request.Currency).Required().USD().EUR(),
 )
 
 fmt.Println(err)
@@ -925,11 +835,7 @@ Select at least one currency before validation; string and defined-string inputs
 
 ```go
 err := validation.Validate(
-	validation.Currency("currency", request.Currency).
-		Required().
-		USD().
-		EUR().
-		GBP(),
+	validation.Currency("currency", request.Currency).Required().USD().EUR().GBP(),
 )
 
 fmt.Println(err)

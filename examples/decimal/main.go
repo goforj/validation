@@ -23,14 +23,9 @@ func main() {
 	// snippet:decimal
 	err := validation.Validate(
 		validation.Decimal("amount", request.Amount).
-			Required().
-			Min("0.01").
-			Max("999999.99").
+			Required().Min("0.01").Max("999999.99").
 			MaxScale(2),
-		validation.Currency("currency", request.Currency).
-			Required().
-			USD().
-			EUR(),
+		validation.Currency("currency", request.Currency).Required().USD().EUR(),
 	)
 
 	fmt.Println(err)

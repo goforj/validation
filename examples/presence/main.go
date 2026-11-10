@@ -28,19 +28,11 @@ func presence() {
 	// <nil>
 
 	err := validation.Validate(
-		validation.Presence(
-			"seats",
-			patch.Seats,
-			func(value int) validation.Field {
-				return validation.Number("", value).Min(0)
-			},
-		).Required(),
+		validation.Presence("seats", patch.Seats, func(value int) validation.Field {
+			return validation.Number("", value).Min(0)
+		}).Required(),
 
-		validation.Presence(
-			"name",
-			patch.Name,
-			nonBlank,
-		).Nullable(),
+		validation.Presence("name", patch.Name, nonBlank).Nullable(),
 	)
 
 	fmt.Println(err)

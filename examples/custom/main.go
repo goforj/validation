@@ -17,10 +17,7 @@ type AllowedDomain struct {
 func (r AllowedDomain) Validate(value string) error {
 	_, domain, ok := strings.Cut(value, "@")
 	if !ok || !strings.EqualFold(domain, r.Domain) {
-		return validation.Invalid(
-			"email_domain",
-			"Use your company email address.",
-		)
+		return validation.Invalid("email_domain", "Use your company email address.")
 	}
 	return nil
 }

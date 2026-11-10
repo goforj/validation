@@ -23,8 +23,7 @@ func main() {
 
 		validation.Time("ends_at", ends).After(starts),
 
-		validation.String("date", "2026-11-10").
-			IsDate(time.DateOnly),
+		validation.String("date", "2026-11-10").IsDate(time.DateOnly),
 		validation.String("local_time", "2026-11-10 10:00").
 			IsDateIn("2006-01-02 15:04", time.UTC),
 	)

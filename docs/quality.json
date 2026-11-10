@@ -1,10 +1,10 @@
 {
-  "source_sha256": "598442b93cf740c6a876e78a985d9569f90c8990958239bd221383ad2dcb1db1",
+  "source_sha256": "f47c894ac967901727f172b008f4d181145842e1ce4f13dd4f5760148fbde1ba",
   "go_version": "go1.27.3",
   "goos": "darwin",
   "goarch": "arm64",
-  "unit_covered_statements": 1386,
-  "unit_total_statements": 1386,
+  "unit_covered_statements": 1384,
+  "unit_total_statements": 1384,
   "executed_tests": 180,
   "modules": [
     ".",

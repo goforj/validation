@@ -25,14 +25,9 @@ func main() {
 	}
 
 	err := validation.Validate(
-		validation.String("name", req.Name).
-			Required().
-			Min(2).
-			Max(100),
+		validation.String("name", req.Name).Required().Min(2).Max(100),
 
-		validation.String("email", req.Email).
-			Required().
-			IsEmail(),
+		validation.String("email", req.Email).Required().IsEmail(),
 
 		validation.Number("age", req.Age).Min(18),
 		validation.Bool("terms", req.Terms).Accepted(),

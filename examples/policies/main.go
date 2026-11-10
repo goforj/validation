@@ -23,10 +23,7 @@ func composition() {
 			if strings.HasPrefix(value, "A") {
 				return nil
 			}
-			return validation.Invalid(
-				"starts_a",
-				"Must start with A",
-			)
+			return validation.Invalid("starts_a", "Must start with A")
 		},
 	)
 
@@ -35,10 +32,7 @@ func composition() {
 			if strings.HasSuffix(value, "Z") {
 				return nil
 			}
-			return validation.Invalid(
-				"ends_z",
-				"Must end with Z",
-			)
+			return validation.Invalid("ends_z", "Must end with Z")
 		},
 	)
 
