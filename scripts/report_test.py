@@ -3,6 +3,7 @@
 import json
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from report import badge, coverage, fingerprint, passing_tests
@@ -77,6 +78,11 @@ class ReportTests(unittest.TestCase):
     def test_badges_use_evidence(self):
         self.assertIn("100%", badge("unit coverage", "100%"))
         self.assertIn("82", badge("tests", "82"))
+        tests = ET.fromstring(badge("tests", "111"))
+        coverage = ET.fromstring(badge("unit coverage", "100%"))
+        self.assertLess(int(tests.attrib["width"]), 100)
+        self.assertLess(int(tests.attrib["width"]), int(coverage.attrib["width"]))
+        self.assertEqual(tests.attrib["height"], "20")
 
 
 if __name__ == "__main__":

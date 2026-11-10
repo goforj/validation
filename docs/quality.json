@@ -1,5 +1,5 @@
 {
-  "source_sha256": "4b178aaff9350d2dd00c04c69398c84a7a8d954d703869b9c5dc856d6143a4d8",
+  "source_sha256": "ea82a2d90b94ece49dd9c031f20c7f5e66dbbf993bd368bdaa84ba29b97faf79",
   "go_version": "go1.27.3",
   "goos": "darwin",
   "goarch": "arm64",

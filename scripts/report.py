@@ -4,6 +4,7 @@
 import hashlib
 import json
 import subprocess
+from html import escape
 from pathlib import Path
 
 
@@ -63,7 +64,10 @@ def fingerprint(root):
 
 def badge(label, value):
     """Render a compact repository-owned status badge from measured evidence."""
-    return f'<svg xmlns="http://www.w3.org/2000/svg" width="130" height="20" role="img" aria-label="{label}: {value}"><title>{label}: {value}</title><clipPath id="r"><rect width="130" height="20" rx="3"/></clipPath><g clip-path="url(#r)"><path fill="#555" d="M0 0h80v20H0z"/><path fill="#27813e" d="M80 0h50v20H80z"/></g><g fill="white" text-anchor="middle" font-family="Verdana,sans-serif" font-size="11"><text x="40" y="14">{label}</text><text x="105" y="14">{value}</text></g></svg>\n'
+    left, right = len(label) * 7 + 14, len(value) * 7 + 14
+    width = left + right
+    label, value = escape(label), escape(value)
+    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="20" role="img" aria-label="{label}: {value}"><title>{label}: {value}</title><clipPath id="r"><rect width="{width}" height="20" rx="3"/></clipPath><g clip-path="url(#r)"><path fill="#555" d="M0 0h{left}v20H0z"/><path fill="#4c1" d="M{left} 0h{right}v20H{left}z"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11"><text x="{left / 2:g}" y="14">{label}</text><text x="{left + right / 2:g}" y="14">{value}</text></g></svg>\n'
 
 
 def main():
