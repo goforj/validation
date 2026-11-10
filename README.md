@@ -19,10 +19,10 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 
 | Feature | What it provides |
 | :--- | :--- |
-| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Typed chains | String, number, boolean, slice, and domain-value builders expose relevant operations. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Reusable rules | Plug in custom validator types or functions without global registration. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Format checks | Check email, URL, UUID, IP, JSON, and Base64 directly in the fluent chain. |
-| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Field errors | Ordered paths, stable codes, custom messages, and separate operational errors. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Typed chains | String, number, boolean, slice, and domain-value builders expose relevant operations. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Reusable rules | Plug in custom validator types or functions without global registration. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Format checks | Check email, URL, UUID, IP, JSON, and Base64 directly in the fluent chain. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt="" align="absmiddle"> Field errors | Ordered paths, stable codes, custom messages, and separate operational errors. |
 
 ## Quick start
 
