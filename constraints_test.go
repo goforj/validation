@@ -164,3 +164,16 @@ func TestMapValidation(t *testing.T) {
 		t.Fatal(failures)
 	}
 }
+
+// TestUniquenessCanceledEmpty checks cancellation even when no elements require a callback.
+func TestUniquenessCanceledEmpty(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	rule := UniqueBy(func(v int) int { return v }).(RuleWithContext[[]int])
+	if err := rule.ValidateContext(ctx, nil); !errors.Is(err, context.Canceled) {
+		t.Fatal(err)
+	}
+	if err := Validate(Number("min", int64(math.MinInt64)).MultipleOf(-1), Number("negative", -6).MultipleOf(-3)); err != nil {
+		t.Fatal(err)
+	}
+}

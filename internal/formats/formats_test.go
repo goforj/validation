@@ -86,3 +86,23 @@ func FuzzBase64URL(f *testing.F) {
 		}
 	})
 }
+
+// TestBase64URLBlocks checks both padding policies across bounded scratch blocks.
+func TestBase64URLBlocks(t *testing.T) {
+	for _, size := range []int{767, 768, 769, 1537, 4096} {
+		for _, encoding := range []*base64.Encoding{base64.URLEncoding, base64.RawURLEncoding} {
+			value := encoding.EncodeToString(make([]byte, size))
+			if !validBase64URL(value) {
+				t.Fatalf("rejected %d bytes", size)
+			}
+		}
+	}
+	value := strings.Repeat("YWJj", 1<<20)
+	if allocations := testing.AllocsPerRun(3, func() {
+		if !validBase64URL(value) {
+			panic("valid encoding rejected")
+		}
+	}); allocations != 0 {
+		t.Fatalf("allocated decoded payload: %v", allocations)
+	}
+}

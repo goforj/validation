@@ -38,10 +38,13 @@ func (r uniqueRule[T, K]) ValidateContext(ctx context.Context, values []T) error
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	seen := make(map[K]struct{}, len(values))
+	var seen map[K]struct{}
 	for _, value := range values {
 		if err := ctx.Err(); err != nil {
 			return err
+		}
+		if seen == nil {
+			seen = make(map[K]struct{}, len(values))
 		}
 		key := r.key(value)
 		if err := ctx.Err(); err != nil {
@@ -55,7 +58,7 @@ func (r uniqueRule[T, K]) ValidateContext(ctx context.Context, values []T) error
 		}
 		seen[key] = struct{}{}
 	}
-	return nil
+	return ctx.Err()
 }
 
 // Unique requires distinct Go-comparable elements; use UniqueBy for structs with slices or maps.
