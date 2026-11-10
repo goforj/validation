@@ -2,11 +2,12 @@ package validation
 
 import (
 	"context"
-	"github.com/goforj/validation/internal/formats"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/goforj/validation/internal/formats"
 )
 
 // StringField is an immutable fluent chain for string values.

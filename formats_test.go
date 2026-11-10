@@ -56,3 +56,28 @@ func TestDefinedFormatTypes(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// TestURLAuthorityAndEscapes enforces URI spelling consistently across supported Go versions.
+func TestURLAuthorityAndEscapes(t *testing.T) {
+	for _, value := range []string{
+		"https://::1:443", "https://2001:db8::1:80", "https://[127.0.0.1]",
+		"https://example.com/?q=%", "https://example.com/?q=%0",
+		"https://example.com/?q=%G0", "https://example.com/?q=%0G",
+	} {
+		t.Run(value, func(t *testing.T) {
+			var failures *validation.Errors
+			err := validation.Validate(validation.String("url", value).IsURL())
+			if !errors.As(err, &failures) || failures.Issues()[0].Code != "url" {
+				t.Fatalf("malformed URI passed: %v", err)
+			}
+		})
+	}
+	for _, value := range []string{
+		"https://[::1]:443/", "https://[2001:db8::1]/",
+		"https://example.com/?q=%20%2f%AF", "HTTPS://EXAMPLE.COM/é?q=%C3%A9",
+	} {
+		if err := validation.Validate(validation.String("url", value).IsURL()); err != nil {
+			t.Fatalf("valid URI %q rejected: %v", value, err)
+		}
+	}
+}

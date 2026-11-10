@@ -83,6 +83,9 @@ func (b SliceField[T]) evaluate(ctx context.Context, prefix []string, issues *[]
 	if err != nil || !valid {
 		return err
 	}
+	if len(b.each) == 0 {
+		return nil
+	}
 	for i, value := range b.f.value {
 		for _, children := range b.each {
 			if err := ctx.Err(); err != nil {

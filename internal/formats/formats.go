@@ -73,8 +73,7 @@ func (r Rule) Validate(value string) error {
 	case JSON:
 		valid, code, message = json.Valid([]byte(value)), "json", "must be valid JSON"
 	case Base64:
-		_, err := base64.StdEncoding.Strict().DecodeString(value)
-		valid, code, message = value != "" && err == nil && !strings.ContainsAny(value, "\r\n"), "base64", "must be standard padded Base64"
+		valid, code, message = validBase64(value), "base64", "must be standard padded Base64"
 	default:
 		return fmt.Errorf("validation: unknown format rule %d", r)
 	}
@@ -82,6 +81,29 @@ func (r Rule) Validate(value string) error {
 		return nil
 	}
 	return violation.Builtin(code, message, nil)
+}
+
+// validBase64 bounds scratch memory while retaining the standard decoder's strict padding checks.
+func validBase64(value string) bool {
+	if value == "" || len(value)%4 != 0 || strings.ContainsAny(value, "\r\n") {
+		return false
+	}
+	const block = 1024
+	var scratch [block / 4 * 3]byte
+	decoder := base64.StdEncoding.Strict()
+	for len(value) > block {
+		chunk := value[:block]
+		// Padding is legal only in the final quantum of the complete input.
+		if strings.ContainsRune(chunk, '=') {
+			return false
+		}
+		if _, err := decoder.Decode(scratch[:], []byte(chunk)); err != nil {
+			return false
+		}
+		value = value[block:]
+	}
+	_, err := decoder.Decode(scratch[:], []byte(value))
+	return err == nil
 }
 
 // email enforces the application's ASCII mailbox policy in addition to mail syntax.
@@ -126,7 +148,7 @@ func hostname(value string) bool {
 
 // webURL enforces explicit web schemes, valid hosts, ports, and whitespace-free spelling.
 func webURL(value string) bool {
-	if strings.ContainsFunc(value, unicode.IsSpace) {
+	if strings.ContainsFunc(value, unicode.IsSpace) || !validEscapes(value) {
 		return false
 	}
 	u, err := url.Parse(value)
@@ -139,7 +161,7 @@ func webURL(value string) bool {
 		if strings.Contains(u.Host, "[") || !hostname(strings.TrimSuffix(host, ".")) {
 			return false
 		}
-	} else if address.Zone() != "" {
+	} else if address.Zone() != "" || address.Is6() != strings.HasPrefix(u.Host, "[") {
 		return false
 	}
 	if strings.HasSuffix(u.Host, ":") {
@@ -152,6 +174,25 @@ func webURL(value string) bool {
 		}
 	}
 	return true
+}
+
+// validEscapes checks query escapes that net/url deliberately leaves uninterpreted.
+func validEscapes(value string) bool {
+	for i := 0; i < len(value); i++ {
+		if value[i] != '%' {
+			continue
+		}
+		if i+2 >= len(value) || !hexDigit(value[i+1]) || !hexDigit(value[i+2]) {
+			return false
+		}
+		i += 2
+	}
+	return true
+}
+
+// hexDigit recognizes URI escape digits without allocating a decoded component.
+func hexDigit(value byte) bool {
+	return value >= '0' && value <= '9' || value >= 'a' && value <= 'f' || value >= 'A' && value <= 'F'
 }
 
 // uuid checks canonical spelling and the RFC variant without allocating decoded bytes.

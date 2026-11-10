@@ -27,7 +27,7 @@ All format methods reject empty strings and perform no network access. Their sha
 | Method | Accepted format |
 | --- | --- |
 | IsEmail | One bare ASCII mailbox, at most 254 bytes overall and 64 bytes before the final @, with a dotted ASCII DNS domain. Display names, quoted local parts, address literals, control characters, and surrounding whitespace are rejected. No DNS or deliverability check. |
-| IsURL | Absolute http or https URL with a valid ASCII DNS hostname or IP literal. Localhost and a trailing DNS root dot are accepted. Ports, when present, are 1 through 65535. Whitespace, zones, and invalid escapes are rejected. This is a syntax check, not an SSRF policy. |
+| IsURL | Absolute http or https URL with a valid ASCII DNS hostname or IP literal. IPv6 addresses require square brackets; IPv4 addresses must be unbracketed. Localhost and a trailing DNS root dot are accepted. Ports, when present, are 1 through 65535. Whitespace, zones, and invalid escapes (including in the query) are rejected. This is a syntax check, not an SSRF policy. |
 | IsUUID | Canonical hyphenated UUID, case insensitive, versions 1 through 8 with the RFC variant, plus nil and max UUIDs. |
 | IsUUIDv4 and IsUUIDv7 | Canonical spelling with the named version and RFC variant. |
 | IsIP and IsIPv4 | Unzoned address literals without port numbers or CIDR prefixes. IPv4 excludes mapped IPv6 addresses. |
