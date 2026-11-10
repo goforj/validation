@@ -9,7 +9,7 @@ The release target is the standalone root module, github.com/goforj/validation. 
 | Consumer API and compatibility | Reviewed typed bounds, defined types, custom validator types and functions, rule composition, optional pointers, JSON presence, dates, collection rules, policy scoping, concurrent reuse, and owned configuration. Additive builders and policies preserve existing calls and first-violation-per-field defaults. |
 | Correctness and malformed input | Tested string and numeric boundaries, exact full-width divisibility, map key ordering and escaping, incomparable uniqueness keys, date parsing, missing/null/zero states, composition short circuits, operational error precedence, cancellation, and explicit message overrides. Original URL fixes reject unbracketed IPv6 authorities and invalid query escapes. |
 | Security and resources | Standard and URL-safe Base64 use fixed scratch storage with strict canonical decoding. Successful checks have zero decoded-payload allocations, including a prepared 4 MiB input. Uniqueness checks honor cancellation for empty input and check cancellation before allocating their key map. Reviewed error redaction, borrowed values, lazy callbacks, immutable policies, formatter parameter ownership, and dependency ownership. Vulnerability scanning covers both modules on a patched toolchain. |
-| Documentation and operations | Fourteen canonical programs run under the output-checking runner. README snippets and API navigation derive from those sources and GoDoc. Checked generated parity, exact coverage accounting, module inventory, tidy parity, public-consumer setup, CI, and Codecov upload configuration. |
+| Documentation and operations | At the v0.1.0 review, fourteen canonical programs ran under the output-checking runner. README snippets and API navigation derive from those sources and GoDoc. Checked generated parity, exact coverage accounting, module inventory, tidy parity, public-consumer setup, CI, and Codecov upload configuration. |
 
 The original URL correction rejects malformed values that earlier revisions accepted under the same documented syntax contract. The breadth expansion adds APIs and opt-in policies. Existing source/API calls, configuration, default collection behavior, and the minimum Go version remain supported. This utility has no persisted data or operational migration.
 
@@ -38,6 +38,14 @@ The final local gate passed all 1,035 instrumented statements, 157 Go tests and 
 Fresh [allocation samples](review/2026-11-10/allocations-v0.1.0.txt) confirm that a prepared 4 MiB Base64 value still uses 120 bytes per full validation, matching the 256-byte case. The direct standard and URL-safe Base64 checks retain their zero-allocation regression tests. These measurements establish resource behavior and do not rank this library against others.
 
 Codecov is active for this repository. CI uploads the unit report through OIDC, treats upload failures as errors, and configures project and patch targets at 100% without flag carryforward. The coverage badge links to the hosted report. Require a processed 100% report for the exact final pushed candidate alongside successful CI, Security, and public-consumer checks before publishing v0.1.0.
+
+## Unreleased exact decimal addition
+
+The additive `Decimal` builder validates exact plain-decimal text with inclusive and exclusive bounds, numeric equality, and written fractional-digit limits. It accepts `json.Number` and defined string types, rejects floating-point arguments at compile time, and retains no rounded replacement value. The example uses application-owned typed currency constants; currency metadata and conversion remain outside the core.
+
+The implementation compares significant digits directly, with constant auxiliary storage. The parser and comparisons passed a [15-second fuzz campaign](review/2026-11-10/fuzz-decimal-ordering.txt) covering 2,273,611 input pairs, checked against an independent grammar and `big.Rat` comparison oracle for accepted bounded inputs. A direct allocation regression uses a fractional value longer than one million digits and requires zero numeric-storage allocations.
+
+Local verification passed all 1,115 instrumented statements, 174 Go tests and fuzz seeds, ten Python tests, and fifteen runnable examples. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. Existing APIs, the minimum Go version, and the runtime dependency footprint remain unchanged. The v0.1.0 tag remains the reviewed original release; the decimal API is available on main ahead of a separate future release.
 
 ## Scope and release procedure
 
