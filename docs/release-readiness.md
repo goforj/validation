@@ -23,6 +23,22 @@ The original 15-second fuzz campaigns completed without failure: 2,442,505 stand
 
 The [allocation samples before](review/2026-11-10/allocations-before.txt) and [after](review/2026-11-10/allocations-after.txt) use the same committed benchmark harness on Go 1.27.3, darwin/arm64. The baseline implementations are from a26aaf5; the original fixes and harness are in 57f3702. Each sample uses a 100 ms interval. Full validation of a prepared 4 MiB standard Base64 value changed from approximately 3 MiB of allocation per call to 120 bytes, matching the small-input case. The current direct zero-allocation tests cover both Base64 alphabets. These establish allocation behavior, not a general throughput ranking.
 
+## v0.1.0 candidate review
+
+A fresh review examined the current public API and all runtime implementations through four passes: consumer behavior and compatibility, correctness and cancellation, security and resources, and documentation and release operations. The runtime fixes have direct regression tests:
+
+- Direct `Input.UnmarshalJSON` calls accepted non-JSON whitespace around null and replaced the previous value. Null recognition now permits only JSON whitespace; malformed input preserves the prior state.
+- `Time.Equal` retained the expected timestamp in issue parameters. It now keeps equality targets private, matching the string and numeric equality contract. Time bounds still expose their configured limits.
+- The decoder documentation now states that enclosing `DisallowUnknownFields` and `UseNumber` options do not propagate through `Input`'s custom unmarshaler. Tests cover typed integer precision and the documented decoder boundary.
+
+These are runtime correctness and error-redaction corrections. Exported signatures, configuration, module layout, and minimum Go version are unchanged. No persisted data or operational migration is involved.
+
+The final local gate passed all 1,035 instrumented statements, 157 Go tests and fuzz seeds, ten Python tests, and fourteen runnable programs. Both modules passed tests and vet on Go 1.24.0. Go 1.27.3 passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. A 20-second [JSON input fuzz run](review/2026-11-10/fuzz-input-json.txt) exercised 2,324,210 inputs against the standard JSON scanner without a failure.
+
+Fresh [allocation samples](review/2026-11-10/allocations-v0.1.0.txt) confirm that a prepared 4 MiB Base64 value still uses 120 bytes per full validation, matching the 256-byte case. The direct standard and URL-safe Base64 checks retain their zero-allocation regression tests. These measurements establish resource behavior and do not rank this library against others.
+
+Codecov is active for this repository. CI uploads the unit report through OIDC, treats upload failures as errors, and configures project and patch targets at 100% without flag carryforward. The coverage badge links to the hosted report. Require a processed 100% report for the exact final pushed candidate alongside successful CI, Security, and public-consumer checks before publishing v0.1.0.
+
 ## Scope and release procedure
 
 The standalone core covers typed values, common scalar and format constraints, collections, conditional and presence-aware inputs, dates, composition, structured errors, localization hooks, and pluggable application rules. File inspection, database adapters, request binding, coercion, schema export, maintained country/currency registries, and translation bundles remain application or adapter concerns.

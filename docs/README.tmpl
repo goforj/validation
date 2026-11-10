@@ -11,7 +11,7 @@
   <a href="https://github.com/goforj/validation/actions/workflows/security.yml"><img src="https://github.com/goforj/validation/actions/workflows/security.yml/badge.svg" alt="Security"></a>
   <img src="https://img.shields.io/badge/go-1.24%2B-blue.svg" alt="Go 1.24 or newer">
   <img src="https://img.shields.io/badge/status-unreleased-lightgrey.svg" alt="Unreleased">
-  <a href="docs/quality.json"><img src="docs/assets/coverage.svg" alt="Measured unit coverage"></a>
+  <a href="https://app.codecov.io/gh/goforj/validation"><img src="docs/assets/coverage.svg" alt="Measured unit coverage"></a>
   <a href="docs/quality.json"><img src="docs/assets/tests.svg" alt="Executed Go tests"></a>
 </p>
 

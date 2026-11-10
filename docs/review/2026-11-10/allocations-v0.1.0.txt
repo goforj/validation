@@ -1,0 +1,9 @@
+goos: darwin
+goarch: arm64
+pkg: github.com/goforj/validation
+cpu: Apple M4 Max
+BenchmarkBase64Validation/256B-16         	  516980	       214.3 ns/op	1194.60 MB/s	     120 B/op	       2 allocs/op
+BenchmarkBase64Validation/4MiB-16         	      55	   2148933 ns/op	1951.81 MB/s	     120 B/op	       2 allocs/op
+BenchmarkSliceWithoutEach-16              	 1716255	        69.72 ns/op	     168 B/op	       2 allocs/op
+PASS
+ok  	github.com/goforj/validation	0.695s

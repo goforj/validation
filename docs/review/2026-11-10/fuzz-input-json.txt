@@ -1,0 +1,12 @@
+fuzz: elapsed: 0s, gathering baseline coverage: 0/12 completed
+fuzz: elapsed: 0s, gathering baseline coverage: 12/12 completed, now fuzzing with 4 workers
+fuzz: elapsed: 3s, execs: 345401 (115124/sec), new interesting: 250 (total: 262)
+fuzz: elapsed: 6s, execs: 760448 (138324/sec), new interesting: 281 (total: 293)
+fuzz: elapsed: 9s, execs: 1142531 (127351/sec), new interesting: 325 (total: 337)
+fuzz: elapsed: 12s, execs: 1572725 (143425/sec), new interesting: 341 (total: 353)
+fuzz: elapsed: 15s, execs: 1823692 (83639/sec), new interesting: 360 (total: 372)
+fuzz: elapsed: 18s, execs: 2108276 (94857/sec), new interesting: 396 (total: 408)
+fuzz: elapsed: 21s, execs: 2324210 (72005/sec), new interesting: 396 (total: 408)
+fuzz: elapsed: 21s, execs: 2324210 (0/sec), new interesting: 396 (total: 408)
+PASS
+ok  	github.com/goforj/validation	21.233s
