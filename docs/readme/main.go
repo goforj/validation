@@ -36,9 +36,9 @@ var sections = []section{
 	{"Numeric constraints", []string{"GreaterThan", "LessThan", "MultipleOf"}, "advanced", []string{"numbers"}, ""},
 	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"collection_rules"}, ""},
 	{"Dates and times", []string{"Time", "Before", "After", "IsDate", "IsDateIn"}, "time", []string{"time"}, ""},
-	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence"}, ""},
+	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence", "presence_values", "optional"}, ""},
 	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}, ""},
-	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}, ""},
+	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition_rules", "composition"}, ""},
 	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}, ""},
 	{"Exact decimals", []string{"Decimal", "MaxScale"}, "decimal", []string{"decimal"}, ""},
 	{"Currencies", []string{"Currency", "USD", "EUR", "GBP"}, "currency", []string{"currency"}, ""},
@@ -83,7 +83,7 @@ func render(root string, entries []section) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		var code strings.Builder
+		var blocks []string
 		demonstrated := make(map[string]bool)
 		for _, id := range entry.snippets {
 			snippet, err := extract(string(source), id)
@@ -97,7 +97,7 @@ func render(root string, entries []section) (string, error) {
 			for name := range names {
 				demonstrated[name] = true
 			}
-			code.WriteString(snippet + "\n")
+			blocks = append(blocks, snippet)
 		}
 		if lastGroup != entry.group {
 			fmt.Fprintf(&examples, "## %s\n\n", entry.group)
@@ -127,7 +127,10 @@ func render(root string, entries []section) (string, error) {
 		if symbols[description] == "" {
 			return "", fmt.Errorf("missing GoDoc description %s", description)
 		}
-		fmt.Fprintf(&examples, "### %s\n\n%s\n\n```go\n%s```\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[description]), code.String())
+		fmt.Fprintf(&examples, "### %s\n\n%s\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[description]))
+		for _, block := range blocks {
+			fmt.Fprintf(&examples, "```go\n%s```\n\n", block)
+		}
 		if entry.program == "currency" {
 			examples.WriteString("See the [complete currency selector list](#currency-selectors).\n\n")
 		}
@@ -136,7 +139,7 @@ func render(root string, entries []section) (string, error) {
 			programs[entry.program] = true
 		}
 		if entry.program == "quickstart" {
-			quickstart = code.String()
+			quickstart = strings.Join(blocks, "\n")
 		}
 	}
 	currencies, err := currencySelectors(symbols)

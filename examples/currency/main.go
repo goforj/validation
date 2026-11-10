@@ -20,6 +20,7 @@ func main() {
 			EUR().
 			GBP(),
 	)
+
 	fmt.Println(err)
 	// <nil>
 	// endsnippet:currency

@@ -11,15 +11,20 @@ import (
 func main() {
 	// snippet:errors
 	err := validation.Validate(
-		validation.String("email", "bad").Label("email address").IsEmail().
+		validation.String("email", "bad").
+			Label("email address").
+			IsEmail().
 			Message("Enter your work email address."),
 	)
+
 	var failures *validation.Errors
 	if errors.As(err, &failures) {
 		fmt.Println(failures.First("email"))
 		// Enter your work email address.
+
 		fmt.Println(failures.Messages()["email"])
 		// [Enter your work email address.]
+
 		fmt.Println(failures.Issues()[0].Code)
 		// email
 	}

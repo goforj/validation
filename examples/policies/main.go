@@ -9,50 +9,84 @@ import (
 	"github.com/goforj/validation"
 )
 
-// main composes reusable rules and configures error presentation and collection.
+// main demonstrates reusable rule composition and configurable evaluation policies.
 func main() {
-	// snippet:composition
-	startsA := validation.RuleFunc[string](func(v string) error {
-		if strings.HasPrefix(v, "A") {
+	composition()
+	policies()
+}
+
+// composition builds reusable alternatives before attaching them to application values.
+func composition() {
+	// snippet:composition_rules
+	startsA := validation.RuleFunc[string](func(value string) error {
+		if strings.HasPrefix(value, "A") {
 			return nil
 		}
+
 		return validation.Invalid("starts_a", "Must start with A")
 	})
-	endsZ := validation.ContextRuleFunc[string](func(_ context.Context, v string) error {
-		if strings.HasSuffix(v, "Z") {
-			return nil
-		}
-		return validation.Invalid("ends_z", "Must end with Z")
-	})
-	fmt.Println(validation.Validate(
-		validation.String("code", "ABC").Using(validation.All(
-			validation.Any[string](startsA, endsZ),
-			validation.Not[string](endsZ),
-		)),
-	))
+
+	endsZ := validation.ContextRuleFunc[string](
+		func(_ context.Context, value string) error {
+			if strings.HasSuffix(value, "Z") {
+				return nil
+			}
+			return validation.Invalid("ends_z", "Must end with Z")
+		},
+	)
+
+	allowedCode := validation.All(
+		validation.Any[string](startsA, endsZ),
+		validation.Not[string](endsZ),
+	)
+	// endsnippet:composition_rules
+
+	// snippet:composition
+	err := validation.Validate(
+		validation.String("code", "ABC").Using(allowedCode),
+	)
+
+	fmt.Println(err)
 	// <nil>
-	fmt.Println(validation.Validate(
-		validation.String("code", "XYZ").Using(validation.Any[string](startsA, endsZ)),
-	))
+
+	err = validation.Validate(
+		validation.String("code", "XYZ").
+			Using(validation.Any[string](startsA, endsZ)),
+	)
+
+	fmt.Println(err)
 	// <nil>
 	// endsnippet:composition
+}
+
+// policies changes error collection and presentation without rebuilding field rules.
+func policies() {
 	// snippet:policies
-	validator := validation.New().CollectAll().FormatMessages(func(issue validation.Issue) string {
-		return issue.Path + ": " + issue.Code
-	})
-	var failures *validation.Errors
-	if err := validator.Validate(
+	validator := validation.New().
+		CollectAll().
+		FormatMessages(func(issue validation.Issue) string {
+			return issue.Path + ": " + issue.Code
+		})
+
+	err := validator.Validate(
 		validation.String("name", "a").Min(3).Contains("z"),
-	); errors.As(err, &failures) {
+	)
+
+	var failures *validation.Errors
+	if errors.As(err, &failures) {
 		fmt.Println(failures.Messages()["name"])
 		// [name: min name: contains]
 	}
+
 	first := validator.StopOnFirstError()
-	fmt.Println(first.ValidateContext(
+
+	err = first.ValidateContext(
 		context.Background(),
 		validation.String("name", "").Required(),
 		validation.Number("age", 0).Min(18),
-	))
+	)
+
+	fmt.Println(err)
 	// name: required
 	// endsnippet:policies
 }

@@ -28,9 +28,12 @@ func (r AllowedDomain) Validate(value string) error {
 func main() {
 	// snippet:custom
 	err := validation.Validate(
-		validation.String("email", "ada@other.example").Required().IsEmail().
+		validation.String("email", "ada@other.example").
+			Required().
+			IsEmail().
 			Using(AllowedDomain{Domain: "goforj.dev"}),
 	)
+
 	fmt.Println(err)
 	// Use your company email address.
 	// endsnippet:custom

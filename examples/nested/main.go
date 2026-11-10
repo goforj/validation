@@ -18,9 +18,15 @@ func main() {
 	items := []Item{
 		{SKU: "book", Quantity: 0},
 	}
+
 	err := validation.Validate(
-		validation.Group("address", validation.String("city", "").Required()),
-		validation.Slice("items", items).Required().Max(100).
+		validation.Group("address",
+			validation.String("city", "").Required(),
+		),
+
+		validation.Slice("items", items).
+			Required().
+			Max(100).
 			Each(func(item Item) []validation.Field {
 				return []validation.Field{
 					validation.String("sku", item.SKU).Required(),
@@ -28,6 +34,7 @@ func main() {
 				}
 			}),
 	)
+
 	failures := err.(*validation.Errors)
 	for _, issue := range failures.Issues() {
 		fmt.Println(issue.Path, issue.Code)

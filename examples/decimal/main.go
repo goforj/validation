@@ -32,6 +32,7 @@ func main() {
 			USD().
 			EUR(),
 	)
+
 	fmt.Println(err)
 	// <nil>
 	// endsnippet:decimal

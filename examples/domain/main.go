@@ -21,12 +21,19 @@ func main() {
 		}
 		return nil
 	})
-	available := validation.ContextRuleFunc[Delivery](func(ctx context.Context, value Delivery) error {
-		return ctx.Err()
-	})
-	err := validation.Validate(
-		validation.Value("delivery", Delivery{Days: 7}).Using(window).Using(available),
+
+	available := validation.ContextRuleFunc[Delivery](
+		func(ctx context.Context, _ Delivery) error {
+			return ctx.Err()
+		},
 	)
+
+	err := validation.Validate(
+		validation.Value("delivery", Delivery{Days: 7}).
+			Using(window).
+			Using(available),
+	)
+
 	fmt.Println(err)
 	// <nil>
 	// endsnippet:domain
