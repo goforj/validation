@@ -18,27 +18,39 @@ func main() {
 func presence() {
 	// snippet:presence
 	var patch struct {
-		Seats validation.Input[int]    `json:"seats,omitzero"`
-		Name  validation.Input[string] `json:"name,omitzero"`
+		Seats validation.Input[int]    `json:"seats"`
+		Name  validation.Input[string] `json:"name"`
 	}
 
-	decodeErr := json.Unmarshal([]byte(`{"seats":0,"name":null}`), &patch)
+	payload := []byte(`{"seats":0,"name":null}`)
+	decodeErr := json.Unmarshal(payload, &patch)
 	fmt.Println(decodeErr)
 	// <nil>
 
 	err := validation.Validate(
-		validation.Presence("seats", patch.Seats, func(value int) validation.Field {
-			return validation.Number("", value).Min(0)
-		}).Required(),
+		validation.Presence(
+			"seats",
+			patch.Seats,
+			func(value int) validation.Field {
+				return validation.Number("", value).Min(0)
+			},
+		).Required(),
 
-		validation.Presence("name", patch.Name, nonBlank).Nullable(),
+		validation.Presence(
+			"name",
+			patch.Name,
+			nonBlank,
+		).Nullable(),
 	)
 
 	fmt.Println(err)
 	// <nil>
 
-	fmt.Println(patch.Seats.IsPresent(), patch.Name.IsNull())
-	// true true
+	fmt.Println(patch.Seats.IsPresent())
+	// true
+
+	fmt.Println(patch.Name.IsNull())
+	// true
 	// endsnippet:presence
 }
 
@@ -70,7 +82,6 @@ func optionalValues() {
 
 	err = validation.Validate(
 		validation.Optional(&name, nonBlank),
-		validation.Presence("name", validation.Provided(name), nonBlank),
 	)
 
 	fmt.Println(err)
@@ -79,7 +90,7 @@ func optionalValues() {
 }
 
 // snippet:presence_rule
-// nonBlank shares a content rule across optional and presence-aware inputs.
+// nonBlank reuses a nonblank string rule.
 func nonBlank(value string) validation.Field {
 	return validation.String("", value).NotBlank()
 }
@@ -89,7 +100,8 @@ func nonBlank(value string) validation.Field {
 // Output:
 // <nil>
 // <nil>
-// true true
+// true
+// true
 // false true
 // true
 // <nil>

@@ -29,8 +29,12 @@ func main() {
 			Max(100).
 			Each(func(item Item) []validation.Field {
 				return []validation.Field{
-					validation.String("sku", item.SKU).Required(),
-					validation.Number("quantity", item.Quantity).Min(1),
+					validation.String("sku", item.SKU).
+						Required(),
+					validation.Number(
+						"quantity",
+						item.Quantity,
+					).Min(1),
 				}
 			}),
 	)

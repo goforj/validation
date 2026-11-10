@@ -15,9 +15,15 @@ type ProfilePatch struct {
 func (req ProfilePatch) Validate() error {
 	// snippet:patch
 	return validation.Validate(
-		validation.When(req.Email != nil, func() validation.Field {
-			return validation.String("email", *req.Email).Required().IsEmail()
-		}),
+		validation.When(
+			req.Email != nil,
+			func() validation.Field {
+				email := *req.Email
+				return validation.String("email", email).
+					Required().
+					IsEmail()
+			},
+		),
 	)
 	// endsnippet:patch
 }

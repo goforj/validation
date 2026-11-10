@@ -18,20 +18,27 @@ func main() {
 // composition builds reusable alternatives before attaching them to application values.
 func composition() {
 	// snippet:composition_rules
-	startsA := validation.RuleFunc[string](func(value string) error {
-		if strings.HasPrefix(value, "A") {
-			return nil
-		}
-
-		return validation.Invalid("starts_a", "Must start with A")
-	})
+	startsA := validation.RuleFunc[string](
+		func(value string) error {
+			if strings.HasPrefix(value, "A") {
+				return nil
+			}
+			return validation.Invalid(
+				"starts_a",
+				"Must start with A",
+			)
+		},
+	)
 
 	endsZ := validation.ContextRuleFunc[string](
 		func(_ context.Context, value string) error {
 			if strings.HasSuffix(value, "Z") {
 				return nil
 			}
-			return validation.Invalid("ends_z", "Must end with Z")
+			return validation.Invalid(
+				"ends_z",
+				"Must end with Z",
+			)
 		},
 	)
 

@@ -8,16 +8,19 @@ import (
 )
 
 // snippet:custom_type
-// AllowedDomain restricts registrations to a configured company domain.
+// AllowedDomain requires the configured company domain.
 type AllowedDomain struct {
 	Domain string
 }
 
-// Validate returns a safe input failure for addresses outside the company.
+// Validate rejects addresses outside the company.
 func (r AllowedDomain) Validate(value string) error {
 	_, domain, ok := strings.Cut(value, "@")
 	if !ok || !strings.EqualFold(domain, r.Domain) {
-		return validation.Invalid("email_domain", "Use your company email address.")
+		return validation.Invalid(
+			"email_domain",
+			"Use your company email address.",
+		)
 	}
 	return nil
 }

@@ -60,28 +60,39 @@ func numberConstraints() {
 // collectionConstraints validates distinct identifiers and permitted map keys.
 func collectionConstraints() {
 	// snippet:collection_rules
+	products := []Product{{ID: 1}, {ID: 2}}
+	labels := map[string]string{"category": "books"}
+
 	err := validation.Validate(
 		validation.Slice("tags", []string{"go", "books"}).
 			Unique().
 			Contains("go"),
 
-		validation.Slice("products", []Product{{ID: 1}, {ID: 2}}).
-			Using(validation.UniqueBy(func(product Product) int {
-				return product.ID
-			})),
+		validation.Slice("products", products).
+			Using(validation.UniqueBy(
+				func(product Product) int {
+					return product.ID
+				},
+			)),
 
-		validation.Map("labels", map[string]string{"category": "books"}).
+		validation.Map("labels", labels).
 			Required().
 			HasKey("category").
 			OnlyKeys("category").
-			Each(func(_ string, value string) []validation.Field {
-				return []validation.Field{
-					validation.String("", value).NotBlank(),
-				}
-			}),
+			Each(label),
 	)
 
 	fmt.Println(err)
 	// <nil>
 	// endsnippet:collection_rules
 }
+
+// snippet:label_rule
+// label checks a map value independently of its key.
+func label(_ string, value string) []validation.Field {
+	return []validation.Field{
+		validation.String("", value).NotBlank(),
+	}
+}
+
+// endsnippet:label_rule

@@ -15,12 +15,17 @@ type Delivery struct {
 // main adapts functions into rules without weakening domain type checking.
 func main() {
 	// snippet:domain
-	window := validation.RuleFunc[Delivery](func(value Delivery) error {
-		if value.Days > 30 {
-			return validation.Invalid("delivery_window", "Choose delivery within 30 days.")
-		}
-		return nil
-	})
+	window := validation.RuleFunc[Delivery](
+		func(value Delivery) error {
+			if value.Days > 30 {
+				return validation.Invalid(
+					"delivery_window",
+					"Choose delivery within 30 days.",
+				)
+			}
+			return nil
+		},
+	)
 
 	available := validation.ContextRuleFunc[Delivery](
 		func(ctx context.Context, _ Delivery) error {

@@ -19,11 +19,16 @@ func main() {
 			Min(2).
 			Max(100),
 
-		validation.String("company", "").RequiredIf(false).Max(200),
-		validation.String("role", "member").In("member", "admin"),
+		validation.String("company", "").
+			RequiredIf(false).
+			Max(200),
+		validation.String("role", "member").
+			In("member", "admin"),
 
-		validation.String("confirmation", "correct horse").Equal("correct horse"),
-		validation.String("sku", "BOOK-42").Match(skuPattern),
+		validation.String("confirmation", "correct horse").
+			Equal("correct horse"),
+		validation.String("sku", "BOOK-42").
+			Match(skuPattern),
 
 		validation.Number("age", 36).Min(18).Max(120),
 		validation.Bool("terms", true).Accepted(),

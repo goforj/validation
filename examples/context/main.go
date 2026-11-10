@@ -17,10 +17,12 @@ func main() {
 		context.Background(),
 		validation.String("email", "ada@example.com").
 			IsEmail().
-			Check(func(ctx context.Context, email string) error {
-				// A real directory client would use ctx and email here.
-				return unavailable
-			}),
+			Check(
+				func(ctx context.Context, v string) error {
+					// A client would use ctx and v.
+					return unavailable
+				},
+			),
 	)
 
 	fmt.Println(errors.Is(err, unavailable))

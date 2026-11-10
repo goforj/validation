@@ -34,7 +34,7 @@ var sections = []section{
 	{"Constraints", []string{"Required", "RequiredIf", "NotBlank", "Min", "Max", "In", "Equal", "Match", "Accepted"}, "constraints", []string{"constraints"}, "StringField.Required"},
 	{"Text constraints", []string{"Len", "Contains", "NotContains", "StartsWith", "EndsWith", "NotEqual", "NotIn"}, "advanced", []string{"text"}, ""},
 	{"Numeric constraints", []string{"GreaterThan", "LessThan", "MultipleOf"}, "advanced", []string{"numbers"}, ""},
-	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"collection_rules"}, ""},
+	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"label_rule", "collection_rules"}, ""},
 	{"Dates and times", []string{"Time", "Before", "After", "IsDate", "IsDateIn"}, "time", []string{"time"}, ""},
 	{"Optional inputs", []string{"Presence", "Nullable", "Optional", "Provided", "Null", "IsPresent", "IsNull", "Get"}, "presence", []string{"presence_rule", "presence", "presence_values", "optional"}, ""},
 	{"More formats", []string{"IsULID", "IsHostname", "IsCIDR", "IsMAC", "IsE164", "IsBase64URL", "IsAlpha", "IsAlphanumeric", "IsDigits", "IsASCII", "IsLowercase", "IsUppercase", "IsUTF8"}, "moreformats", []string{"moreformats"}, ""},

@@ -169,22 +169,28 @@ fmt.Println(err)
 IsEmail requires a bare ASCII mailbox with a dotted domain.
 
 ```go
-err := validation.Validate(
-	validation.String("email", "ada@example.com").IsEmail(),
-	validation.String("site", "https://goforj.dev").IsURL(),
+uuidV4 := "550e8400-e29b-41d4-a716-446655440000"
+uuidV7 := "0190bde7-5ad0-7000-8000-000000000001"
 
-	validation.String("id", "550e8400-e29b-41d4-a716-446655440000").
+err := validation.Validate(
+	validation.String("email", "ada@example.com").
+		IsEmail(),
+	validation.String("site", "https://goforj.dev").
+		IsURL(),
+
+	validation.String("id", uuidV4).
 		IsUUID(),
-	validation.String("trace_id", "550e8400-e29b-41d4-a716-446655440000").
+	validation.String("trace_id", uuidV4).
 		IsUUIDv4(),
-	validation.String("request_id", "0190bde7-5ad0-7000-8000-000000000001").
+	validation.String("request_id", uuidV7).
 		IsUUIDv7(),
 
 	validation.String("host", "::1").IsIP(),
 	validation.String("ip", "192.0.2.1").IsIPv4(),
 	validation.String("ipv6", "2001:db8::1").IsIPv6(),
 
-	validation.String("metadata", `{"source":"web"}`).IsJSON(),
+	validation.String("metadata", `{"source":"web"}`).
+		IsJSON(),
 	validation.String("cursor", "YWJj").IsBase64(),
 )
 
@@ -202,9 +208,15 @@ When evaluates the callback lazily only when condition is true.
 
 ```go
 return validation.Validate(
-	validation.When(req.Email != nil, func() validation.Field {
-		return validation.String("email", *req.Email).Required().IsEmail()
-	}),
+	validation.When(
+		req.Email != nil,
+		func() validation.Field {
+			email := *req.Email
+			return validation.String("email", email).
+				Required().
+				IsEmail()
+		},
+	),
 )
 ```
 
@@ -235,8 +247,12 @@ err := validation.Validate(
 		Max(100).
 		Each(func(item Item) []validation.Field {
 			return []validation.Field{
-				validation.String("sku", item.SKU).Required(),
-				validation.Number("quantity", item.Quantity).Min(1),
+				validation.String("sku", item.SKU).
+					Required(),
+				validation.Number(
+					"quantity",
+					item.Quantity,
+				).Min(1),
 			}
 		}),
 )
@@ -260,16 +276,19 @@ for _, issue := range failures.Issues() {
 Using attaches a reusable validator for the exact value type.
 
 ```go
-// AllowedDomain restricts registrations to a configured company domain.
+// AllowedDomain requires the configured company domain.
 type AllowedDomain struct {
 	Domain string
 }
 
-// Validate returns a safe input failure for addresses outside the company.
+// Validate rejects addresses outside the company.
 func (r AllowedDomain) Validate(value string) error {
 	_, domain, ok := strings.Cut(value, "@")
 	if !ok || !strings.EqualFold(domain, r.Domain) {
-		return validation.Invalid("email_domain", "Use your company email address.")
+		return validation.Invalid(
+			"email_domain",
+			"Use your company email address.",
+		)
 	}
 	return nil
 }
@@ -304,10 +323,12 @@ err := validation.ValidateContext(
 	context.Background(),
 	validation.String("email", "ada@example.com").
 		IsEmail().
-		Check(func(ctx context.Context, email string) error {
-			// A real directory client would use ctx and email here.
-			return unavailable
-		}),
+		Check(
+			func(ctx context.Context, v string) error {
+				// A client would use ctx and v.
+				return unavailable
+			},
+		),
 )
 
 fmt.Println(errors.Is(err, unavailable))
@@ -327,12 +348,17 @@ fmt.Println(errors.Is(err, unavailable))
 Value starts a deferred chain for a borrowed application value.
 
 ```go
-window := validation.RuleFunc[Delivery](func(value Delivery) error {
-	if value.Days > 30 {
-		return validation.Invalid("delivery_window", "Choose delivery within 30 days.")
-	}
-	return nil
-})
+window := validation.RuleFunc[Delivery](
+	func(value Delivery) error {
+		if value.Days > 30 {
+			return validation.Invalid(
+				"delivery_window",
+				"Choose delivery within 30 days.",
+			)
+		}
+		return nil
+	},
+)
 
 available := validation.ContextRuleFunc[Delivery](
 	func(ctx context.Context, _ Delivery) error {
@@ -421,11 +447,16 @@ err := validation.Validate(
 		Min(2).
 		Max(100),
 
-	validation.String("company", "").RequiredIf(false).Max(200),
-	validation.String("role", "member").In("member", "admin"),
+	validation.String("company", "").
+		RequiredIf(false).
+		Max(200),
+	validation.String("role", "member").
+		In("member", "admin"),
 
-	validation.String("confirmation", "correct horse").Equal("correct horse"),
-	validation.String("sku", "BOOK-42").Match(skuPattern),
+	validation.String("confirmation", "correct horse").
+		Equal("correct horse"),
+	validation.String("sku", "BOOK-42").
+		Match(skuPattern),
 
 	validation.Number("age", 36).Min(18).Max(120),
 	validation.Bool("terms", true).Accepted(),
@@ -514,25 +545,35 @@ fmt.Println(err)
 Map starts a deferred chain for a borrowed string-keyed map.
 
 ```go
+// label checks a map value independently of its key.
+func label(_ string, value string) []validation.Field {
+	return []validation.Field{
+		validation.String("", value).NotBlank(),
+	}
+}
+```
+
+```go
+products := []Product{{ID: 1}, {ID: 2}}
+labels := map[string]string{"category": "books"}
+
 err := validation.Validate(
 	validation.Slice("tags", []string{"go", "books"}).
 		Unique().
 		Contains("go"),
 
-	validation.Slice("products", []Product{{ID: 1}, {ID: 2}}).
-		Using(validation.UniqueBy(func(product Product) int {
-			return product.ID
-		})),
+	validation.Slice("products", products).
+		Using(validation.UniqueBy(
+			func(product Product) int {
+				return product.ID
+			},
+		)),
 
-	validation.Map("labels", map[string]string{"category": "books"}).
+	validation.Map("labels", labels).
 		Required().
 		HasKey("category").
 		OnlyKeys("category").
-		Each(func(_ string, value string) []validation.Field {
-			return []validation.Field{
-				validation.String("", value).NotBlank(),
-			}
-		}),
+		Each(label),
 )
 
 fmt.Println(err)
@@ -569,7 +610,8 @@ err := validation.Validate(
 
 	validation.Time("ends_at", ends).After(starts),
 
-	validation.String("date", "2026-11-10").IsDate(time.DateOnly),
+	validation.String("date", "2026-11-10").
+		IsDate(time.DateOnly),
 	validation.String("local_time", "2026-11-10 10:00").
 		IsDateIn("2006-01-02 15:04", time.UTC),
 )
@@ -602,7 +644,7 @@ Presence defers child validation until input contains a non-null value.
 Use an empty child path to retain path, or a named child to append a segment.
 
 ```go
-// nonBlank shares a content rule across optional and presence-aware inputs.
+// nonBlank reuses a nonblank string rule.
 func nonBlank(value string) validation.Field {
 	return validation.String("", value).NotBlank()
 }
@@ -610,27 +652,39 @@ func nonBlank(value string) validation.Field {
 
 ```go
 var patch struct {
-	Seats validation.Input[int]    `json:"seats,omitzero"`
-	Name  validation.Input[string] `json:"name,omitzero"`
+	Seats validation.Input[int]    `json:"seats"`
+	Name  validation.Input[string] `json:"name"`
 }
 
-decodeErr := json.Unmarshal([]byte(`{"seats":0,"name":null}`), &patch)
+payload := []byte(`{"seats":0,"name":null}`)
+decodeErr := json.Unmarshal(payload, &patch)
 fmt.Println(decodeErr)
 // <nil>
 
 err := validation.Validate(
-	validation.Presence("seats", patch.Seats, func(value int) validation.Field {
-		return validation.Number("", value).Min(0)
-	}).Required(),
+	validation.Presence(
+		"seats",
+		patch.Seats,
+		func(value int) validation.Field {
+			return validation.Number("", value).Min(0)
+		},
+	).Required(),
 
-	validation.Presence("name", patch.Name, nonBlank).Nullable(),
+	validation.Presence(
+		"name",
+		patch.Name,
+		nonBlank,
+	).Nullable(),
 )
 
 fmt.Println(err)
 // <nil>
 
-fmt.Println(patch.Seats.IsPresent(), patch.Name.IsNull())
-// true true
+fmt.Println(patch.Seats.IsPresent())
+// true
+
+fmt.Println(patch.Name.IsNull())
+// true
 ```
 
 ```go
@@ -656,7 +710,6 @@ name := "Ada"
 
 err = validation.Validate(
 	validation.Optional(&name, nonBlank),
-	validation.Presence("name", validation.Provided(name), nonBlank),
 )
 
 fmt.Println(err)
@@ -696,12 +749,18 @@ fmt.Println(err)
 IsULID requires a case-insensitive 128-bit ULID.
 
 ```go
-err := validation.Validate(
-	validation.String("id", "01ARZ3NDEKTSV4RRFFQ69G5FAV").IsULID(),
+id := "01ARZ3NDEKTSV4RRFFQ69G5FAV"
 
-	validation.String("host", "api.example.com").IsHostname(),
-	validation.String("network", "192.0.2.0/24").IsCIDR(),
-	validation.String("device", "00:11:22:33:44:55").IsMAC(),
+err := validation.Validate(
+	validation.String("id", id).
+		IsULID(),
+
+	validation.String("host", "api.example.com").
+		IsHostname(),
+	validation.String("network", "192.0.2.0/24").
+		IsCIDR(),
+	validation.String("device", "00:11:22:33:44:55").
+		IsMAC(),
 
 	validation.String("phone", "+14155552671").IsE164(),
 	validation.String("token", "__8").IsBase64URL(),
@@ -733,20 +792,27 @@ fmt.Println(err)
 Any accepts a value when a rule succeeds; operational errors abort evaluation.
 
 ```go
-startsA := validation.RuleFunc[string](func(value string) error {
-	if strings.HasPrefix(value, "A") {
-		return nil
-	}
-
-	return validation.Invalid("starts_a", "Must start with A")
-})
+startsA := validation.RuleFunc[string](
+	func(value string) error {
+		if strings.HasPrefix(value, "A") {
+			return nil
+		}
+		return validation.Invalid(
+			"starts_a",
+			"Must start with A",
+		)
+	},
+)
 
 endsZ := validation.ContextRuleFunc[string](
 	func(_ context.Context, value string) error {
 		if strings.HasSuffix(value, "Z") {
 			return nil
 		}
-		return validation.Invalid("ends_z", "Must end with Z")
+		return validation.Invalid(
+			"ends_z",
+			"Must end with Z",
+		)
 	},
 )
 
