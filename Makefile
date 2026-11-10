@@ -24,6 +24,7 @@ test-coverage:
 	./scripts/test-unit.sh
 
 generate:
+	python3 scripts/currencies.py
 	go -C docs run ./readme
 
 check-generated:

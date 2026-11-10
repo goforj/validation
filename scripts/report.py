@@ -56,7 +56,7 @@ def passing_tests(paths):
 def fingerprint(root):
     """Bind reports to relevant source while excluding generated projections."""
     digest = hashlib.sha256()
-    paths = sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts and ".artifacts" not in p.parts and (p.suffix in {".go", ".py", ".sh"} or p.name in {"go.mod", "go.sum", "module-manifest.txt"}))
+    paths = sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts and ".artifacts" not in p.parts and (p.suffix in {".go", ".py", ".sh"} or p.name in {"go.mod", "go.sum", "module-manifest.txt", "currency-codes.txt"}))
     for path in paths:
         digest.update(path.relative_to(root).as_posix().encode() + b"\0" + path.read_bytes() + b"\0")
     return digest.hexdigest()

@@ -40,6 +40,7 @@ var sections = []section{
 	{"Composition", []string{"Any", "All", "Not"}, "policies", []string{"composition"}, ""},
 	{"Evaluation policy", []string{"New", "CollectAll", "StopOnFirstError", "FormatMessages"}, "policies", []string{"policies"}, ""},
 	{"Exact decimals", []string{"Decimal", "MaxScale"}, "decimal", []string{"decimal_types", "decimal"}, ""},
+	{"Currencies", []string{"Currency", "USD", "EUR", "GBP"}, "currency", []string{"currency"}, ""},
 }
 
 // main fails visibly rather than leaving stale generated documentation on disk.

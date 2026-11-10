@@ -41,14 +41,22 @@ Codecov is active for this repository. CI uploads the unit report through OIDC, 
 
 ## Unreleased exact decimal addition
 
-The additive `Decimal` builder validates exact plain-decimal text with inclusive and exclusive bounds, numeric equality, and written fractional-digit limits. It accepts `json.Number` and defined string types, rejects floating-point arguments at compile time, and retains no rounded replacement value. The example uses application-owned typed currency constants; currency metadata and conversion remain outside the core.
+The additive `Decimal` builder validates exact plain-decimal text with inclusive and exclusive bounds, numeric equality, and written fractional-digit limits. It accepts `json.Number` and defined string types, rejects floating-point arguments at compile time, and retains no rounded replacement value. The decimal example now uses package-defined typed currency identifiers and a fluent currency allowlist; currency metadata and conversion remain outside the core.
 
 The implementation compares significant digits directly, with constant auxiliary storage. The parser and comparisons passed a [15-second fuzz campaign](review/2026-11-10/fuzz-decimal-ordering.txt) covering 2,273,611 input pairs, checked against an independent grammar and `big.Rat` comparison oracle for accepted bounded inputs. A direct allocation regression uses a fractional value longer than one million digits and requires zero numeric-storage allocations.
 
 Local verification passed all 1,115 instrumented statements, 174 Go tests and fuzz seeds, ten Python tests, and fifteen runnable examples. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. Existing APIs, the minimum Go version, and the runtime dependency footprint remain unchanged. The v0.1.0 tag remains the reviewed original release; the decimal API is available on main ahead of a separate future release.
 
+## Unreleased fluent currency allowlists
+
+`CurrencyCode` and package currency identifiers are available alongside `Currency(...).USD().EUR().GBP()`. The selectors configure one immutable allowlist with OR semantics. At least one selection is required; a failed allowlist is a prerequisite failure before application checks. Tests verify every generated selector against the pinned identifiers, independent branching, exact matching, custom messages, JSON decoding, and concurrent evaluation.
+
+The 178 identifiers and selectors are generated offline from a pinned codes-only SIX ISO 4217 List One snapshot, published 2026-09-17. The snapshot ships with the root module under testdata, and public-consumer verification now runs the packaged library tests as well as all canonical examples. Source validation rejects malformed or duplicate identifiers, and generated parity checks both code and README twice. These identifiers carry no precision, circulation, provider-acceptance, conversion, or rounding rules.
+
+Local verification passed all 1,329 instrumented statements, 178 Go tests and fuzz seeds, fifteen Python tests, and sixteen runnable programs. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. This addition remains on main ahead of a future release; v0.1.0 is unchanged.
+
 ## Scope and release procedure
 
-The standalone core covers typed values, common scalar and format constraints, collections, conditional and presence-aware inputs, dates, composition, structured errors, localization hooks, and pluggable application rules. File inspection, database adapters, request binding, coercion, schema export, maintained country/currency registries, and translation bundles remain application or adapter concerns.
+The standalone core covers typed values, common scalar and format constraints, collections, conditional and presence-aware inputs, dates, composition, structured errors, localization hooks, and pluggable application rules. File inspection, database adapters, request binding, coercion, schema export, live country/currency registries, and translation bundles remain application or adapter concerns.
 
 No unresolved source blocker remains from these review passes. Require the chosen pushed candidate's CI, Security, Codecov upload, and public-consumer checks to pass. Publish only the root module when a version is authorized; the docs module does not need a tag. Verify the resulting version independently through the public Go proxy before advertising it in installation instructions. v0.1.0 is the first root-module release.

@@ -31,6 +31,8 @@ if args[:3] == ['list', '-m', '-f']:
     print('v0.0.0-20261110172507-727f1e547319')
 elif args[:1] == ['get']:
     if mode == 'download-failure': sys.exit(1)
+elif args[:1] == ['test']:
+    if mode == 'library-test-failure' and args[-1] == 'github.com/goforj/validation': sys.exit(1)
 elif args == ['list', '-m', '-json', 'all']:
     module = {'Path': 'github.com/goforj/validation', 'Version': 'v0.0.0-20261110172507-727f1e547319'}
     if mode == 'replacement': module['Replace'] = {'Dir': '/local/checkout'}
@@ -61,7 +63,8 @@ elif args == ['list', '-m', '-json', 'all']:
         self.assertEqual(download["sumdb"], "sum.golang.org")
         self.assertEqual(download["private"], "")
         self.assertEqual(download["work"], "off")
-        self.assertTrue(any(call["args"][:1] == ["test"] for call in calls))
+        self.assertIn(["test", "-count=1", "github.com/goforj/validation"], [call["args"] for call in calls])
+        self.assertIn(["test", "-count=1", "./examples/..."], [call["args"] for call in calls])
         self.assertEqual({call["cache"] for call in calls if call["args"] == ["clean", "-modcache"]},
                          {lookup["cache"], download["cache"]})
         self.assertFalse(Path(download["cache"]).parent.exists())
@@ -85,3 +88,8 @@ elif args == ['list', '-m', '-json', 'all']:
                 result, calls = self.run_consumer(mode)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertFalse(any(call["args"][0] == "test" for call in calls))
+
+    def test_packaged_library_test_failure_stops_example_verification(self):
+        result, calls = self.run_consumer("library-test-failure")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse(any(call["args"] == ["test", "-count=1", "./examples/..."] for call in calls))

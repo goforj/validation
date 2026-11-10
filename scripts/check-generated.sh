@@ -3,12 +3,18 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 snapshot="$(mktemp)"
-trap 'rm -f "$snapshot"' EXIT
+currency_snapshot="$(mktemp)"
+trap 'rm -f "$snapshot" "$currency_snapshot"' EXIT
 cp README.md "$snapshot"
+cp currency_codes.go "$currency_snapshot"
+python3 scripts/currencies.py
 go -C docs run ./readme
 cmp README.md "$snapshot"
+cmp currency_codes.go "$currency_snapshot"
+python3 scripts/currencies.py
 go -C docs run ./readme
 cmp README.md "$snapshot"
+cmp currency_codes.go "$currency_snapshot"
 python3 - <<'PY'
 import json
 import sys

@@ -49,4 +49,5 @@ if selected != sys.argv[1]:
     raise SystemExit('consumer resolved a different module version')
 print('Public module:', selected)
 PY
+go test -count=1 github.com/goforj/validation
 go test -count=1 ./examples/...

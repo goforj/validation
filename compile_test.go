@@ -13,7 +13,7 @@ func TestInvalidAPIsDoNotCompile(t *testing.T) {
 	if err == nil {
 		t.Fatal("invalid API usage compiled")
 	}
-	for _, expected := range []string{"has no field or method IsEmail", "1.5", "has no field or method Required", "Rule[string]", "~string"} {
+	for _, expected := range []string{"has no field or method IsEmail", "1.5", "has no field or method Required", "Rule[string]", "~string", "has no field or method Min"} {
 		if !strings.Contains(string(output), expected) {
 			t.Fatalf("missing %q in compiler diagnostics:\n%s", expected, output)
 		}

@@ -75,6 +75,14 @@ class ReportTests(unittest.TestCase):
             (root / "go.sum").write_text("dependency checksum\n")
             self.assertNotEqual(before, fingerprint(root))
 
+    def test_fingerprint_includes_currency_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "currency-codes.txt").write_text("USD\n")
+            before = fingerprint(root)
+            (root / "currency-codes.txt").write_text("USD\nEUR\n")
+            self.assertNotEqual(before, fingerprint(root))
+
     def test_badges_use_evidence(self):
         self.assertIn("100%", badge("unit coverage", "100%"))
         self.assertIn("82", badge("tests", "82"))

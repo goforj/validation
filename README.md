@@ -33,7 +33,7 @@ Requires Go 1.24 or newer.
 go get github.com/goforj/validation@v0.1.0
 ```
 
-For the unreleased exact-decimal API, use `go get github.com/goforj/validation@main`.
+For the unreleased exact-decimal and fluent currency APIs, use `go get github.com/goforj/validation@main`.
 
 The complete [registration program](examples/quickstart/main.go) defines the Registration model and imports the library:
 
@@ -68,7 +68,7 @@ See [validation contracts](docs/contracts.md) for presence, formats, paths, conf
 
 Run from the repository root with `go run ./examples/<name>`. Tests verify every program's output.
 
-[quickstart](examples/quickstart/main.go) · [formats](examples/formats/main.go) · [patch](examples/patch/main.go) · [nested](examples/nested/main.go) · [custom](examples/custom/main.go) · [context](examples/context/main.go) · [domain](examples/domain/main.go) · [errors](examples/errors/main.go) · [constraints](examples/constraints/main.go) · [advanced](examples/advanced/main.go) · [time](examples/time/main.go) · [presence](examples/presence/main.go) · [moreformats](examples/moreformats/main.go) · [policies](examples/policies/main.go) · [decimal](examples/decimal/main.go)
+[quickstart](examples/quickstart/main.go) · [formats](examples/formats/main.go) · [patch](examples/patch/main.go) · [nested](examples/nested/main.go) · [custom](examples/custom/main.go) · [context](examples/context/main.go) · [domain](examples/domain/main.go) · [errors](examples/errors/main.go) · [constraints](examples/constraints/main.go) · [advanced](examples/advanced/main.go) · [time](examples/time/main.go) · [presence](examples/presence/main.go) · [moreformats](examples/moreformats/main.go) · [policies](examples/policies/main.go) · [decimal](examples/decimal/main.go) · [currency](examples/currency/main.go)
 
 ## API index
 
@@ -92,6 +92,7 @@ Run from the repository root with `go run ./examples/<name>`. Tests verify every
 | **Composition** | [Any](#any) · [All](#all) · [Not](#not) |
 | **Evaluation policy** | [New](#new) · [CollectAll](#collectall) · [StopOnFirstError](#stoponfirsterror) · [FormatMessages](#formatmessages) |
 | **Exact decimals** | [Decimal](#decimal) · [MaxScale](#maxscale) |
+| **Currencies** | [Currency](#currency) · [USD](#usd) · [EUR](#eur) · [GBP](#gbp) |
 
 ## Values
 
@@ -688,33 +689,52 @@ Decimal starts a deferred chain for signed decimal text without exponent notatio
 Values require ASCII integer digits and may include a fractional part with digits after the point.
 
 ```go
-// Currency is the application's currency-code type; validation maintains no currency registry.
-type Currency string
-
-const (
-	// USD is an application-supported currency code.
-	USD Currency = "USD"
-	// EUR is an application-supported currency code.
-	EUR Currency = "EUR"
-)
-
 // Invoice preserves decimal text and a typed currency code after application decoding.
 type Invoice struct {
 	Amount   json.Number
-	Currency Currency
+	Currency validation.CurrencyCode
 }
 
-invoice := Invoice{Amount: json.Number("1234.50"), Currency: USD}
+invoice := Invoice{Amount: json.Number("1234.50"), Currency: validation.USD}
 fmt.Println(validation.Validate(
 	validation.Decimal("amount", invoice.Amount).
 		Required().Min("0.01").Max("999999.99").MaxScale(2),
-	validation.String("currency", invoice.Currency).In(USD, EUR),
+	validation.Currency("currency", invoice.Currency).USD().EUR(),
 ))
 // <nil>
 fmt.Println(validation.Validate(
 	validation.Decimal("amount", "9007199254740993.01").
 		GreaterThan("9007199254740993").LessThan("9007199254740994").
 		Equal("9007199254740993.010"),
+))
+// <nil>
+
+```
+
+## Currencies
+
+<a id="currency"></a>
+
+<a id="usd"></a>
+
+<a id="eur"></a>
+
+<a id="gbp"></a>
+
+### Currency · USD · EUR · GBP
+
+Currency starts a deferred currency allowlist, configured with selectors such as USD and EUR.
+Select at least one currency before validation; string and defined-string inputs are supported.
+
+```go
+var request struct {
+	Currency validation.CurrencyCode `json:"currency"`
+}
+fmt.Println(json.Unmarshal([]byte(`{"currency":"EUR"}`), &request))
+// <nil>
+fmt.Println(validation.Validate(
+	validation.Currency("currency", request.Currency).
+		Required().USD().EUR().GBP(),
 ))
 // <nil>
 

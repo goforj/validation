@@ -9,4 +9,5 @@ func main() {
 	validation.Bool("active", false).Required()
 	validation.String("email", "value").Using(validation.RuleFunc[int](func(int) error { return nil }))
 	validation.Decimal("amount", 1.23)
+	validation.Currency("currency", validation.USD).Min(1)
 }
