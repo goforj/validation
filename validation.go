@@ -111,6 +111,8 @@ func (f field[T]) using(rule Rule[T]) field[T] {
 	s := step[T]{rule: rule}
 	if nilValue(rule) {
 		s.problem = "nil rule"
+	} else if configured, ok := rule.(configuredRule); ok {
+		s.problem = configured.configurationProblem()
 	}
 	return f.add(s)
 }

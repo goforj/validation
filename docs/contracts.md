@@ -6,6 +6,10 @@ Validation accepts application values after decoding. It does not trim, coerce, 
 
 String lengths count Unicode code points. Required rejects only an empty string; NotBlank also rejects Unicode whitespace. Slice lengths count elements, with Required rejecting both nil and empty slices. RequiredIf(false) disables only that requirement. Other constraints still apply.
 
+Len requires an exact rune or collection count. String Contains, NotContains, StartsWith, and EndsWith use literal case-sensitive text and reject an empty configured search. NotEqual and NotIn keep comparison values out of error details. Numeric GreaterThan and LessThan are exclusive. MultipleOf preserves integer precision; floating-point fields use exact binary remainder semantics, so use integer units for decimal quantities that require exact divisibility.
+
+Slice membership uses reflect.DeepEqual, distinguishing nil and empty collections. Unique uses Go equality for comparable elements; non-comparable elements require UniqueBy with a comparable key. Uniqueness uses linear auxiliary storage and never includes duplicate values in messages. String-keyed maps support length checks, required keys, key allowlists, and Each callbacks receiving both key and value. Empty OnlyKeys permits only an empty map. Map children run in sorted key order, with dots and backslashes escaped in paths; an empty key creates an empty path segment, such as labels.
+
 When constructs its field lazily. A pointer can distinguish a supplied value from nil, but standard JSON decoding maps both absent and null fields to nil pointers. Preserve all three states with an application-owned decoder when an endpoint needs them.
 
 ## Rules and errors

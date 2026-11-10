@@ -30,6 +30,9 @@ var sections = []section{
 	{"Domain values", []string{"Value", "RuleFunc", "ContextRuleFunc"}, "domain", []string{"domain"}},
 	{"Errors", []string{"Label", "Message", "First", "Messages", "Issues"}, "errors", []string{"errors"}},
 	{"Constraints", []string{"Required", "RequiredIf", "NotBlank", "Min", "Max", "In", "Equal", "Match", "Accepted"}, "constraints", []string{"constraints"}},
+	{"Text constraints", []string{"Len", "Contains", "NotContains", "StartsWith", "EndsWith", "NotEqual", "NotIn"}, "advanced", []string{"text"}},
+	{"Numeric constraints", []string{"GreaterThan", "LessThan", "MultipleOf"}, "advanced", []string{"numbers"}},
+	{"Collection constraints", []string{"Map", "Unique", "UniqueBy", "HasKey", "OnlyKeys"}, "advanced", []string{"collection_rules"}},
 }
 
 // main fails visibly rather than leaving stale generated documentation on disk.
@@ -62,6 +65,7 @@ func render(root string, entries []section) (string, error) {
 	index.WriteString("| Group | Functions |\n| ---: | :--- |\n")
 	lastGroup := ""
 	seen := make(map[string]bool)
+	programs := make(map[string]bool)
 	quickstart := ""
 	for _, entry := range entries {
 		path := "examples/" + entry.program + "/main.go"
@@ -107,7 +111,10 @@ func render(root string, entries []section) (string, error) {
 		}
 		fmt.Fprintf(&index, "| **%s** | %s |\n", entry.group, strings.Join(links, " · "))
 		fmt.Fprintf(&examples, "### %s\n\n%s\n\n```go\n%s```\n\n", strings.Join(entry.apis, " · "), strings.TrimSpace(symbols[entry.apis[0]]), code.String())
-		fmt.Fprintf(&sources, "- [%s](%s)\n", entry.program, path)
+		if !programs[entry.program] {
+			fmt.Fprintf(&sources, "- [%s](%s)\n", entry.program, path)
+			programs[entry.program] = true
+		}
 		if entry.program == "quickstart" {
 			quickstart = code.String()
 		}

@@ -84,6 +84,7 @@ Complete programs:
 - [domain](examples/domain/main.go)
 - [errors](examples/errors/main.go)
 - [constraints](examples/constraints/main.go)
+- [advanced](examples/advanced/main.go)
 
 ## API index
 
@@ -98,6 +99,9 @@ Complete programs:
 | **Domain values** | [Value](#value) · [RuleFunc](#rulefunc) · [ContextRuleFunc](#contextrulefunc) |
 | **Errors** | [Label](#label) · [Message](#message) · [First](#first) · [Messages](#messages) · [Issues](#issues) |
 | **Constraints** | [Required](#required) · [RequiredIf](#requiredif) · [NotBlank](#notblank) · [Min](#min) · [Max](#max) · [In](#in) · [Equal](#equal) · [Match](#match) · [Accepted](#accepted) |
+| **Text constraints** | [Len](#len) · [Contains](#contains) · [NotContains](#notcontains) · [StartsWith](#startswith) · [EndsWith](#endswith) · [NotEqual](#notequal) · [NotIn](#notin) |
+| **Numeric constraints** | [GreaterThan](#greaterthan) · [LessThan](#lessthan) · [MultipleOf](#multipleof) |
+| **Collection constraints** | [Map](#map) · [Unique](#unique) · [UniqueBy](#uniqueby) · [HasKey](#haskey) · [OnlyKeys](#onlykeys) |
 
 ## Values
 
@@ -381,6 +385,89 @@ err := validation.Validate(
 	validation.String("sku", "BOOK-42").Match(regexp.MustCompile(`^[A-Z]+-\d+$`)),
 	validation.Number("age", 36).Min(18).Max(120),
 	validation.Bool("terms", true).Accepted(),
+)
+fmt.Println(err)
+// <nil>
+
+```
+
+## Text constraints
+
+<a id="len"></a>
+
+<a id="contains"></a>
+
+<a id="notcontains"></a>
+
+<a id="startswith"></a>
+
+<a id="endswith"></a>
+
+<a id="notequal"></a>
+
+<a id="notin"></a>
+
+### Len · Contains · NotContains · StartsWith · EndsWith · NotEqual · NotIn
+
+Len requires exactly length Unicode code points.
+
+```go
+err := validation.Validate(
+	validation.String("sku", "BOOK-42").Len(7).Contains("-").NotContains(" ").StartsWith("BOOK").EndsWith("42"),
+	validation.String("username", "ada").NotEqual("root").NotIn("admin", "system"),
+)
+fmt.Println(err)
+// <nil>
+
+```
+
+## Numeric constraints
+
+<a id="greaterthan"></a>
+
+<a id="lessthan"></a>
+
+<a id="multipleof"></a>
+
+### GreaterThan · LessThan · MultipleOf
+
+GreaterThan requires a strict lower bound in the field's numeric type.
+
+```go
+err = validation.Validate(
+	validation.Number("quantity", 12).GreaterThan(0).LessThan(100).MultipleOf(3),
+)
+fmt.Println(err)
+// <nil>
+
+```
+
+## Collection constraints
+
+<a id="map"></a>
+
+<a id="unique"></a>
+
+<a id="uniqueby"></a>
+
+<a id="haskey"></a>
+
+<a id="onlykeys"></a>
+
+### Map · Unique · UniqueBy · HasKey · OnlyKeys
+
+Map starts a deferred chain for a borrowed string-keyed map.
+
+```go
+err = validation.Validate(
+	validation.Slice("tags", []string{"go", "books"}).Unique().Contains("go"),
+	validation.Slice("products", []Product{{ID: 1}, {ID: 2}}).
+		Using(validation.UniqueBy(func(product Product) int { return product.ID })),
+	validation.Map("labels", map[string]string{"category": "books"}).
+		Required().HasKey("category").OnlyKeys("category").
+		Each(func(key, value string) []validation.Field {
+			return []validation.Field{validation.String("", value).NotBlank()}
+		}),
 )
 fmt.Println(err)
 // <nil>
