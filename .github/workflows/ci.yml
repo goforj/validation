@@ -20,6 +20,9 @@ jobs:
           cache-dependency-path: '**/go.mod'
       - name: Check both modules on the minimum Go line
         run: make test vet
+      - name: Verify public installation without local replacements
+        if: github.event_name == 'push'
+        run: make verify-consumer
 
   quality:
     runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
         run: |
           test -z "$(gofmt -l .)"
           make modules-check tidy
-          git diff --exit-code -- go.mod go.sum docs/go.mod docs/go.sum
+          test -z "$(git status --porcelain -- go.mod go.sum docs/go.mod docs/go.sum)"
       - name: Check race behavior and vet
         run: make test-race vet
       - name: Enforce exact unit coverage and generated parity
@@ -44,6 +47,9 @@ jobs:
           make test-coverage
           make check-generated
           git diff --exit-code -- README.md docs/assets
+      - name: Verify public installation without local replacements
+        if: github.event_name == 'push'
+        run: make verify-consumer
       - name: Upload unit coverage
         uses: codecov/codecov-action@2320916714171c258d01dbd81040d64d798c6f8e # v7.1.1
         with:

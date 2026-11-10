@@ -2,6 +2,7 @@ package validation
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -436,4 +437,63 @@ func TestJoinedErrors(t *testing.T) {
 	failureAt(t, String("email", "ada@example.com").Using(RuleFunc[string](func(string) error {
 		return errors.Join(Invalid("first", "First failure."), Invalid("second", "Second failure."))
 	})), "first")
+}
+
+// TestSensitiveValuesStayOutOfErrors verifies safe error serialization for secret comparisons.
+func TestSensitiveValuesStayOutOfErrors(t *testing.T) {
+	err := Validate(
+		String("password", "submitted-secret").Equal("stored-secret"),
+		String("role", "private-role").In("allowed-private-role"),
+		Number("confirmation", 7654321).Equal(1234567),
+	)
+	var failures *Errors
+	if !errors.As(err, &failures) {
+		t.Fatal(err)
+	}
+	for _, value := range []any{failures.Issues(), failures.Messages(), failures.Error()} {
+		encoded, err := json.Marshal(value)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, secret := range []string{"submitted-secret", "stored-secret", "private-role", "7654321", "1234567"} {
+			if strings.Contains(string(encoded), secret) {
+				t.Fatal("serialized failure retained a submitted or comparison value")
+			}
+		}
+	}
+}
+
+// TestConcurrentCollections verifies nested execution and returned issue copies stay independent.
+func TestConcurrentCollections(t *testing.T) {
+	chain := Group("order", Slice("items", []int{0, 2}).Each(func(value int) []Field {
+		return []Field{Number("quantity", value).Min(1)}
+	}))
+	start := make(chan struct{})
+	var workers sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			<-start
+			for n := 0; n < 20; n++ {
+				var failures *Errors
+				if !errors.As(Validate(chain), &failures) {
+					t.Error("missing nested error")
+					return
+				}
+				issues := failures.Issues()
+				if len(issues) != 1 || issues[0].Path != "order.items.0.quantity" {
+					t.Error(issues)
+					return
+				}
+				issues[0].Parameters["min"] = "changed"
+				if failures.Issues()[0].Parameters["min"] != "1" {
+					t.Error("issue parameters share mutable storage")
+					return
+				}
+			}
+		}()
+	}
+	close(start)
+	workers.Wait()
 }

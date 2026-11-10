@@ -42,3 +42,5 @@ Names are literal labels, not expressions for traversing a struct. Group creates
 Builders own their constraint slices and presentation configuration. Extending a chain does not mutate other branches. Evaluating a chain does not retain failures or cache results. Input slices, compiled regular expressions, and dependencies inside custom rules are borrowed. Do not mutate them during evaluation. Custom rules must not mutate submitted values and must coordinate state shared across goroutines.
 
 Cancellation is checked before evaluation, between fields and rules, and after callbacks. Validate uses a background context, and ValidateContext normalizes a nil context to a background context. Dependent rules must honor the supplied context during blocking work. Panics from application callbacks propagate normally.
+
+Input-size limits remain application policy. Put Max before IsJSON, IsBase64, or a custom Check when an endpoint has a size bound, since content rules run in declaration order. Base64 validation uses fixed scratch storage without retaining decoded data. Slice checks without Each inspect the parent constraints without traversing elements.

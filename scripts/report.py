@@ -10,14 +10,25 @@ from pathlib import Path
 def coverage(paths):
     """Coalesce repeated blocks from overlapping Go coverage instrumentation."""
     blocks = {}
+    statement_counts = {}
     for path in paths:
         lines = path.read_text().splitlines()
         if not lines or lines[0] != "mode: atomic":
             raise ValueError(f"expected atomic coverage profile: {path}")
+        profile_statements = 0
         for line in lines[1:]:
             location, statements, hits = line.split()
-            key = (location, int(statements))
-            blocks[key] = max(blocks.get(key, 0), int(hits))
+            statements, hits = int(statements), int(hits)
+            if statements < 0 or hits < 0:
+                raise ValueError(f"negative coverage count: {path}")
+            if location in statement_counts and statement_counts[location] != statements:
+                raise ValueError(f"inconsistent statement count: {location}")
+            statement_counts[location] = statements
+            profile_statements += statements
+            key = (location, statements)
+            blocks[key] = max(blocks.get(key, 0), hits)
+        if not profile_statements:
+            raise ValueError(f"empty coverage profile: {path}")
     total = sum(statements for _, statements in blocks)
     covered = sum(statements for (_, statements), hits in blocks.items() if hits)
     if not total or total != covered:
@@ -44,7 +55,7 @@ def passing_tests(paths):
 def fingerprint(root):
     """Bind reports to relevant source while excluding generated projections."""
     digest = hashlib.sha256()
-    paths = sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts and ".artifacts" not in p.parts and (p.suffix in {".go", ".py", ".sh"} or p.name == "go.mod"))
+    paths = sorted(p for p in root.rglob("*") if p.is_file() and ".git" not in p.parts and ".artifacts" not in p.parts and (p.suffix in {".go", ".py", ".sh"} or p.name in {"go.mod", "go.sum", "module-manifest.txt"}))
     for path in paths:
         digest.update(path.relative_to(root).as_posix().encode() + b"\0" + path.read_bytes() + b"\0")
     return digest.hexdigest()

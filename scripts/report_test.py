@@ -38,9 +38,25 @@ class ReportTests(unittest.TestCase):
             events.write_text('{"Action":"fail"}\n')
             with self.assertRaises(ValueError):
                 passing_tests([events])
+
             events.write_text('{"Action":"pass"}\n')
             with self.assertRaises(ValueError):
                 passing_tests([events])
+
+    def test_each_profile_must_be_complete_and_consistent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            one, two = root / "one", root / "two"
+            one.write_text("mode: atomic\np/file.go:1.1,2.1 2 1\n")
+            for content in (
+                "mode: atomic\n",
+                "mode: atomic\np/file.go:1.1,2.1 3 1\n",
+                "mode: atomic\np/other.go:1.1,2.1 -1 1\n",
+                "mode: atomic\np/other.go:1.1,2.1 1 -1\n",
+            ):
+                two.write_text(content)
+                with self.assertRaises(ValueError):
+                    coverage([one, two])
 
     def test_fingerprint_ignores_projections(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -53,6 +69,9 @@ class ReportTests(unittest.TestCase):
             (root / ".artifacts/generated.go").write_text("ignored")
             self.assertEqual(before, fingerprint(root))
             source.write_text("package changed\n")
+            self.assertNotEqual(before, fingerprint(root))
+            before = fingerprint(root)
+            (root / "go.sum").write_text("dependency checksum\n")
             self.assertNotEqual(before, fingerprint(root))
 
     def test_badges_use_evidence(self):

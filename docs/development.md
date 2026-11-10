@@ -16,14 +16,19 @@ make test-coverage
 make generate
 make check-generated
 make security
+make verify-consumer
 ```
 
 Unit coverage requires every instrumented statement to execute. The coverage command merges ordinary tests with instrumented example subprocesses. Race runs pass race instrumentation to those subprocesses. Coverage profiles and raw test JSON stay under .artifacts and are not committed as fresh evidence from an earlier source revision.
 
 The committed quality report records its source fingerprint, toolchain, and platform. CI regenerates that report for its own execution; cross-platform byte parity applies to README and badges rather than the report's execution provenance. Both runs independently require exact statement coverage.
 
+Public-consumer verification needs network access and a pushed revision. It resolves HEAD through the public Go proxy and checksum database in a fresh module cache, rejects local replacements, and executes all canonical example programs outside the checkout. To verify another published revision, run `./scripts/verify-consumer.sh <revision>`. On pushes to main, CI runs this check on both the minimum Go line and stable Go. Pull requests run the local checks without requiring their unpublished merge commits to resolve through the public proxy.
+
 No external services or credentials are required for tests. The context-aware example returns a deterministic dependency failure and does not claim to contact a provider. Drivers and framework integration are outside this utility library's scope.
 
 CI checks the minimum Go line and stable Go, both modules, formatting, unit coverage, race behavior, vet, module inventory, tidy parity, and generated parity. The Security workflow uses a pinned govulncheck version on stable Go. Codecov project and patch checks require exact unit coverage, with upload failures treated as failures. Hosted app configuration is separate from these source files.
 
 Publication is separate from source validation. There are no release tags yet. A versioned release must resolve through the public Go proxy with normal checksums and GOWORK=off before documenting an install command for that version.
+
+Only the root module is a runtime release target. The docs module is repository tooling and does not need a separate release tag. Review [release readiness](release-readiness.md) before selecting and publishing the first version.

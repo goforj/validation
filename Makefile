@@ -1,4 +1,4 @@
-.PHONY: test test-race vet tidy modules-check test-coverage generate check-generated security
+.PHONY: test test-race vet tidy modules-check test-coverage generate check-generated verify-consumer security
 
 test:
 	go test ./...
@@ -28,6 +28,9 @@ generate:
 
 check-generated:
 	./scripts/check-generated.sh
+
+verify-consumer:
+	./scripts/verify-consumer.sh
 
 security:
 	go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
