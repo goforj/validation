@@ -173,6 +173,17 @@ func TestConditions(t *testing.T) {
 	failureAt(t, String("company", "too long").RequiredIf(false).Max(2), "max")
 	failureAt(t, String("company", "").Email().RequiredIf(true), "required")
 	failureAt(t, Slice[int]("items", nil).RequiredIf(true), "required")
+	if err := Validate(String("company", "").RequiredIf(false).Message("Company is required."), Slice[int]("items", nil).RequiredIf(false).Message("Items are required.")); err != nil {
+		t.Fatal(err)
+	}
+	issue := failureAt(t, String("company", "").Min(2).RequiredIf(false).Message("Company is required."), "min")[0]
+	if issue.Message == "Company is required." {
+		t.Fatal("disabled requirement changed a different rule's message")
+	}
+	issue = failureAt(t, Slice[int]("items", nil).Min(2).RequiredIf(false).Message("Items are required."), "min")[0]
+	if issue.Message == "Items are required." {
+		t.Fatal("disabled requirement changed a different rule's message")
+	}
 }
 
 // TestCollections verifies parent bail-out, concrete paths, and per-element aggregation.

@@ -44,11 +44,9 @@ func (b StringField[T]) evaluate(ctx context.Context, prefix []string, issues *[
 // Required rejects an empty string before content rules run.
 func (b StringField[T]) Required() StringField[T] { return b.RequiredIf(true) }
 
-// RequiredIf adds an emptiness check only when condition is true.
+// RequiredIf applies an emptiness check only when condition is true.
 func (b StringField[T]) RequiredIf(condition bool) StringField[T] {
-	if condition {
-		b.f = b.f.add(step[T]{rule: constraint[T]("required", "is required", nil, func(v T) bool { return v != "" }), required: true})
-	}
+	b.f = b.f.add(step[T]{rule: constraint[T]("required", "is required", nil, func(v T) bool { return !condition || v != "" }), required: true})
 	return b
 }
 

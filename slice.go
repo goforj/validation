@@ -38,11 +38,9 @@ func (b SliceField[T]) Check(check func(context.Context, []T) error) SliceField[
 // Required rejects empty and nil slices before evaluating child fields.
 func (b SliceField[T]) Required() SliceField[T] { return b.RequiredIf(true) }
 
-// RequiredIf adds a nonempty constraint only when condition is true.
+// RequiredIf applies a nonempty constraint only when condition is true.
 func (b SliceField[T]) RequiredIf(condition bool) SliceField[T] {
-	if condition {
-		b.f = b.f.add(step[[]T]{rule: constraint[[]T]("required", "is required", nil, func(v []T) bool { return len(v) > 0 }), required: true})
-	}
+	b.f = b.f.add(step[[]T]{rule: constraint[[]T]("required", "is required", nil, func(v []T) bool { return !condition || len(v) > 0 }), required: true})
 	return b
 }
 
