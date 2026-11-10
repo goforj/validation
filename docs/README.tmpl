@@ -1,0 +1,79 @@
+<p align="center">
+  <img src="docs/assets/logo.png" width="300" alt="GoForj validation gopher with a checklist">
+</p>
+
+<p align="center">Typed fluent validation with reusable rules and useful field errors.</p>
+
+<p align="center">
+  <a href="https://pkg.go.dev/github.com/goforj/validation"><img src="https://pkg.go.dev/badge/github.com/goforj/validation.svg" alt="Go Reference"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <a href="https://github.com/goforj/validation/actions/workflows/ci.yml"><img src="https://github.com/goforj/validation/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/goforj/validation/actions/workflows/security.yml"><img src="https://github.com/goforj/validation/actions/workflows/security.yml/badge.svg" alt="Security"></a>
+  <img src="https://img.shields.io/badge/go-1.24%2B-blue.svg" alt="Go 1.24 or newer">
+  <img src="https://img.shields.io/badge/status-unreleased-lightgrey.svg" alt="Unreleased">
+  <a href="docs/quality.json"><img src="docs/assets/coverage.svg" alt="Measured unit coverage"></a>
+  <a href="docs/quality.json"><img src="docs/assets/tests.svg" alt="Executed Go tests"></a>
+</p>
+
+Keep field names, values, and constraints together. Validate decoded requests, configuration, and domain values using ordinary Go code, with no runtime dependencies.
+
+| Feature | What it provides |
+| :--- | :--- |
+| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Typed chains | String, number, boolean, slice, and domain-value builders expose relevant operations. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Reusable rules | Plug in custom validator types or functions without global registration. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Format catalog | Reuse email, URL, UUID, IP, JSON, and Base64 checks through the is package. |
+| <img src="docs/assets/check.svg" width="22" height="22" alt=""> Field errors | Ordered paths, stable codes, custom messages, and separate operational errors. |
+
+## Quick start
+
+Requires Go 1.24 or newer. This library is unreleased. From a source checkout:
+
+```sh
+git clone https://github.com/goforj/validation.git
+cd validation
+go run ./examples/quickstart
+```
+
+The complete [registration program](examples/quickstart/main.go) defines the Registration model and imports the library:
+
+```go
+{{QUICKSTART}}```
+
+## How it works
+
+- **Values are explicit.** Zero and false are ordinary values. Rules evaluate empty strings unless you use a lazy condition to omit a field. Required checks run before content checks.
+- **Errors stay useful.** Validation collects the first violation per field. Custom messages retain their machine code. Unexpected rule errors abort evaluation and remain operational errors.
+- **Custom rules fit the same chain.** Implement Rule[T] with Validate(T) error, or use a function adapter. Return validation.Invalid for an input failure. Add RuleWithContext[T] for dependencies that need cancellation.
+- **Evaluation is local.** Builders can be branched and reused. Input slices and application dependencies are borrowed. Coordinate concurrent mutation in your application.
+
+See [validation contracts](docs/contracts.md) for presence, formats, paths, configuration errors, ownership, and cancellation.
+
+## Runnable examples
+
+Run these from the repository root. Tests execute every program and check its output.
+
+```sh
+go run ./examples/custom
+go run ./examples/nested
+go run ./examples/patch
+```
+
+Complete programs:
+
+{{SOURCES}}
+## API index
+
+{{INDEX}}
+{{EXAMPLES}}
+## Development
+
+```sh
+make test
+make test-race
+make vet
+make test-coverage
+make generate
+make check-generated
+```
+
+The root module contains the library, the is catalog, and executable examples. The separate docs module contains documentation tooling. See [development](docs/development.md) for checks and [the design record](DESIGN.md) for the research behind the API.

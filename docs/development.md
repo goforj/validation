@@ -1,0 +1,29 @@
+# Development
+
+The repository has one runtime module and a separate documentation tooling module. Neither has external Go dependencies. Go 1.24 is the minimum language version. Coverage reporting also uses Python 3 and its standard library. Use a current patched supported toolchain for vulnerability scanning.
+
+The executable programs under examples are the source of truth for workflows and expected output. Their snippet markers drive the README generator; GoDoc owns API descriptions. Edit docs/README.tmpl for surrounding prose and layout. Never fix only the generated README.
+
+Run the standard checks from the repository root:
+
+```sh
+make test
+make test-race
+make vet
+make tidy
+make modules-check
+make test-coverage
+make generate
+make check-generated
+make security
+```
+
+Unit coverage requires every instrumented statement to execute. The coverage command merges ordinary tests with instrumented example subprocesses. Race runs pass race instrumentation to those subprocesses. Coverage profiles and raw test JSON stay under .artifacts and are not committed as fresh evidence from an earlier source revision.
+
+The committed quality report records its source fingerprint, toolchain, and platform. CI regenerates that report for its own execution; cross-platform byte parity applies to README and badges rather than the report's execution provenance. Both runs independently require exact statement coverage.
+
+No external services or credentials are required for tests. The context-aware example returns a deterministic dependency failure and does not claim to contact a provider. Drivers and framework integration are outside this utility library's scope.
+
+CI checks the minimum Go line and stable Go, both modules, formatting, unit coverage, race behavior, vet, module inventory, tidy parity, and generated parity. The Security workflow uses a pinned govulncheck version on stable Go. Codecov project and patch checks require exact unit coverage, with upload failures treated as failures. Hosted app configuration is separate from these source files.
+
+Publication is separate from source validation. There are no release tags yet. A versioned release must resolve through the public Go proxy with normal checksums and GOWORK=off before documenting an install command for that version.
