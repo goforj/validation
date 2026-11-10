@@ -39,21 +39,27 @@ Fresh [allocation samples](review/2026-11-10/allocations-v0.1.0.txt) confirm tha
 
 Codecov is active for this repository. CI uploads the unit report through OIDC, treats upload failures as errors, and configures project and patch targets at 100% without flag carryforward. The coverage badge links to the hosted report. Require a processed 100% report for the exact final pushed candidate alongside successful CI, Security, and public-consumer checks before publishing v0.1.0.
 
-## Unreleased exact decimal addition
+## v0.2.0 exact decimal addition
 
 The additive `Decimal` builder validates exact plain-decimal text with inclusive and exclusive bounds, numeric equality, and written fractional-digit limits. It accepts `json.Number` and defined string types, rejects floating-point arguments at compile time, and retains no rounded replacement value. The decimal example now uses package-defined typed currency identifiers and a fluent currency allowlist; currency metadata and conversion remain outside the core.
 
 The implementation compares significant digits directly, with constant auxiliary storage. The parser and comparisons passed a [15-second fuzz campaign](review/2026-11-10/fuzz-decimal-ordering.txt) covering 2,273,611 input pairs, checked against an independent grammar and `big.Rat` comparison oracle for accepted bounded inputs. A direct allocation regression uses a fractional value longer than one million digits and requires zero numeric-storage allocations.
 
-Local verification passed all 1,115 instrumented statements, 174 Go tests and fuzz seeds, ten Python tests, and fifteen runnable examples. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. Existing APIs, the minimum Go version, and the runtime dependency footprint remain unchanged. The v0.1.0 tag remains the reviewed original release; the decimal API is available on main ahead of a separate future release.
+Local verification passed all 1,115 instrumented statements, 174 Go tests and fuzz seeds, ten Python tests, and fifteen runnable examples. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. Existing APIs, the minimum Go version, and the runtime dependency footprint remain unchanged. The v0.1.0 tag remains the reviewed original release; the decimal API ships in v0.2.0.
 
-## Unreleased fluent currency allowlists
+## v0.2.0 fluent currency allowlists
 
 `CurrencyCode` and package currency identifiers are available alongside `Currency(...).USD().EUR().GBP()`. The selectors configure one immutable allowlist with OR semantics. At least one selection is required; a failed allowlist is a prerequisite failure before application checks. Tests verify every generated selector against the pinned identifiers, independent branching, exact matching, custom messages, JSON decoding, and concurrent evaluation.
 
 The 178 identifiers and selectors are generated offline from a pinned codes-only SIX ISO 4217 List One snapshot, published 2026-09-17. The snapshot ships with the root module under testdata, and public-consumer verification now runs the packaged library tests as well as all canonical examples. Source validation rejects malformed or duplicate identifiers, and generated parity checks both code and README twice. These identifiers carry no precision, circulation, provider-acceptance, conversion, or rounding rules.
 
-Local verification passed all 1,329 instrumented statements, 178 Go tests and fuzz seeds, fifteen Python tests, and sixteen runnable programs. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. This addition remains on main ahead of a future release; v0.1.0 is unchanged.
+Local verification passed all 1,329 instrumented statements, 178 Go tests and fuzz seeds, fifteen Python tests, and sixteen runnable programs. Both modules passed tests and vet on Go 1.24.0. Stable Go passed race tests, vet, tidy parity, module inventory, generated parity, and vulnerability scans. This addition ships in v0.2.0; v0.1.0 is unchanged.
+
+## v0.2.0 release candidate
+
+This release adds exact decimal constraints and fluent typed currency allowlists while preserving existing public calls, Go 1.24 support, and the standard-library-only runtime. The README examples have been grouped into focused blocks, formatted for narrower GitHub panes, and checked in rendered views at 900, 1024, and 1280 pixels without code-block horizontal overflow.
+
+The final source verification covers 1,386 instrumented statements at 100%, 180 Go tests and fuzz seeds, fifteen Python tests, and sixteen runnable programs. Both modules pass minimum Go tests and vet, stable Go race checks, generated parity, and the established CI gates. Publication requires CI, Security, Codecov processing, and public-consumer verification for the exact release commit. The root v0.2.0 tag is the only module publication target; docs remains repository tooling.
 
 ## Scope and release procedure
 

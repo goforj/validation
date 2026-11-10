@@ -33,6 +33,6 @@ No external services or credentials are required for tests. The context-aware ex
 
 CI checks the minimum Go line and stable Go, both modules, formatting, unit coverage, race behavior, vet, module inventory, tidy parity, and generated parity. The Security workflow uses a pinned govulncheck version on stable Go. Codecov project and patch checks require exact unit coverage, with upload failures treated as failures. Hosted app configuration is separate from these source files.
 
-Runtime releases use root version tags such as v0.1.0. Each version must resolve through the public Go proxy with normal checksums and GOWORK=off before publication is reported as complete.
+Runtime releases use root version tags such as v0.2.0. Each version must resolve through the public Go proxy with normal checksums and GOWORK=off before publication is reported as complete.
 
-Only the root module is a runtime release target. The docs module is repository tooling and does not need a separate release tag. Review [release readiness](release-readiness.md) before selecting and publishing the first version.
+Only the root module is a runtime release target. The docs module is repository tooling and does not need a separate release tag. Review [release readiness](release-readiness.md) before selecting and publishing a version.

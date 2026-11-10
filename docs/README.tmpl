@@ -10,7 +10,7 @@
   <a href="https://github.com/goforj/validation/actions/workflows/ci.yml"><img src="https://github.com/goforj/validation/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/goforj/validation/actions/workflows/security.yml"><img src="https://github.com/goforj/validation/actions/workflows/security.yml/badge.svg" alt="Security"></a>
   <img src="https://img.shields.io/badge/go-1.24%2B-blue.svg" alt="Go 1.24 or newer">
-  <a href="https://github.com/goforj/validation/releases/tag/v0.1.0"><img src="https://img.shields.io/badge/version-v0.1.0-blue.svg" alt="Version v0.1.0"></a>
+  <a href="https://github.com/goforj/validation/releases/tag/v0.2.0"><img src="https://img.shields.io/badge/version-v0.2.0-blue.svg" alt="Version v0.2.0"></a>
   <a href="https://app.codecov.io/gh/goforj/validation"><img src="docs/assets/coverage.svg" alt="Measured unit coverage"></a>
   <a href="docs/quality.json"><img src="docs/assets/tests.svg" alt="Executed Go tests"></a>
 </p>
@@ -30,10 +30,8 @@ Keep field names, values, and constraints together. Validate decoded requests, c
 Requires Go 1.24 or newer.
 
 ```sh
-go get github.com/goforj/validation@v0.1.0
+go get github.com/goforj/validation@v0.2.0
 ```
-
-For the unreleased exact-decimal and fluent currency APIs, use `go get github.com/goforj/validation@main`.
 
 The complete [registration program](examples/quickstart/main.go) defines the Registration model and imports the library:
 
