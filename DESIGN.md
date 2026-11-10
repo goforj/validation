@@ -348,3 +348,15 @@ Measure a successful request, a request with multiple failures, and a slice-heav
 Defer tags, string-rule parsing, input coercion, request binding, wildcard lookup, schema export, automatic struct traversal, files/images, translation bundles, and database adapters. Dynamic input validation may merit a separate adapter after the typed API is proven.
 
 Wrapping an existing validator remains an option if delivery speed becomes the main requirement. The proposed contracts for typed chains, presence, ordered errors, and operational failures differ enough that a thin wrapper needs a prototype before it can be assumed to save work. The recommended starting point is a small independent core with a deliberately limited rule set.
+
+## Accepted breadth expansion
+
+The initial proposal above records the starting scope. The November 10 implementation expands that scope while retaining its typed fluent style, direct Is-format methods, package-level defaults, Go 1.24 minimum, and standard-library-only runtime:
+
+- Strings add exact lengths, literal text matching, exclusions, date parsing, and explicit character policies.
+- Numbers add strict bounds, exclusions, and exact divisibility checks.
+- Collections add membership, uniqueness by value or selected key, and string-keyed maps with key allowlists and deterministic child paths.
+- Time values use explicit instant bounds. Optional pointers and presence-aware JSON inputs support omitted, null, and supplied zero values through lazy callbacks.
+- Reusable rules compose with Any, All, and Not. Immutable Validator policies support collecting all content failures, stopping globally, and application-owned message formatting for localization.
+
+The [contracts](docs/contracts.md) define the exact policies and [canonical examples](README.md#runnable-examples) demonstrate every indexed operation. Country/currency registries, file inspection, database adapters, request binding, coercion, schema export, and translation bundles remain outside the standalone core. Applications attach domain-specific checks through Rule[T] and Check.
