@@ -33,27 +33,47 @@ Requires Go 1.24 or newer.
 go get github.com/goforj/validation@v0.2.0
 ```
 
-The complete [registration program](examples/quickstart/main.go) defines the Registration model and imports the library:
+Validate a decoded registration request. The [complete program](examples/quickstart/main.go) includes the request model and sample input:
 
 ```go
-req := Registration{
-	Name:  "Ada",
-	Email: "ada@example.com",
-	Age:   36,
-	Terms: true,
-}
-
 err := validation.Validate(
+	// Identity and contact details.
 	validation.String("name", req.Name).Required().Min(2).Max(100),
+	validation.String("email", req.Email).Required().IsEmail().
+		Message("Enter a valid email address."),
 
-	validation.String("email", req.Email).Required().IsEmail(),
+	// Password length and confirmation.
+	validation.String("password", req.Password).Required().Min(12),
+	validation.String("password_confirmation", req.PasswordConfirmation).
+		Required().Equal(req.Password),
 
+	// Business accounts must provide a company name.
+	validation.String("account_type", req.AccountType).In("personal", "business"),
+	validation.String("company", req.Company).
+		RequiredIf(req.AccountType == "business"),
+
+	// Eligibility and consent.
 	validation.Number("age", req.Age).Min(18),
 	validation.Bool("terms", req.Terms).Accepted(),
 )
+```
 
-fmt.Println(err)
-// <nil>
+The example supplies invalid input so you can inspect field messages and stable issue codes:
+
+```go
+var failures *validation.Errors
+if errors.As(err, &failures) {
+	fmt.Println(failures.First("email"))
+	// Enter a valid email address.
+
+	for _, issue := range failures.Issues() {
+		fmt.Println(issue.Path, issue.Code)
+	}
+	// email email
+	// password_confirmation equal
+	// company required
+	// terms accepted
+}
 ```
 
 ## How it works
@@ -110,24 +130,42 @@ Run from the repository root with `go run ./examples/<name>`. Tests verify every
 String starts a deferred chain for a borrowed application value.
 
 ```go
-req := Registration{
-	Name:  "Ada",
-	Email: "ada@example.com",
-	Age:   36,
-	Terms: true,
-}
-
 err := validation.Validate(
+	// Identity and contact details.
 	validation.String("name", req.Name).Required().Min(2).Max(100),
+	validation.String("email", req.Email).Required().IsEmail().
+		Message("Enter a valid email address."),
 
-	validation.String("email", req.Email).Required().IsEmail(),
+	// Password length and confirmation.
+	validation.String("password", req.Password).Required().Min(12),
+	validation.String("password_confirmation", req.PasswordConfirmation).
+		Required().Equal(req.Password),
 
+	// Business accounts must provide a company name.
+	validation.String("account_type", req.AccountType).In("personal", "business"),
+	validation.String("company", req.Company).
+		RequiredIf(req.AccountType == "business"),
+
+	// Eligibility and consent.
 	validation.Number("age", req.Age).Min(18),
 	validation.Bool("terms", req.Terms).Accepted(),
 )
+```
 
-fmt.Println(err)
-// <nil>
+```go
+var failures *validation.Errors
+if errors.As(err, &failures) {
+	fmt.Println(failures.First("email"))
+	// Enter a valid email address.
+
+	for _, issue := range failures.Issues() {
+		fmt.Println(issue.Path, issue.Code)
+	}
+	// email email
+	// password_confirmation equal
+	// company required
+	// terms accepted
+}
 ```
 
 ## Formats
@@ -161,17 +199,21 @@ uuidV4 := "550e8400-e29b-41d4-a716-446655440000"
 uuidV7 := "0190bde7-5ad0-7000-8000-000000000001"
 
 err := validation.Validate(
+	// Contact details.
 	validation.String("email", "ada@example.com").IsEmail(),
 	validation.String("site", "https://goforj.dev").IsURL(),
 
+	// Request and trace identifiers.
 	validation.String("id", uuidV4).IsUUID(),
 	validation.String("trace_id", uuidV4).IsUUIDv4(),
 	validation.String("request_id", uuidV7).IsUUIDv7(),
 
+	// IP addresses.
 	validation.String("host", "::1").IsIP(),
 	validation.String("ip", "192.0.2.1").IsIPv4(),
 	validation.String("ipv6", "2001:db8::1").IsIPv6(),
 
+	// Structured and encoded values.
 	validation.String("metadata", `{"source":"web"}`).IsJSON(),
 	validation.String("cursor", "YWJj").IsBase64(),
 )
@@ -675,20 +717,25 @@ IsULID requires a case-insensitive 128-bit ULID.
 
 ```go
 err := validation.Validate(
+	// Sortable identifiers.
 	validation.String("id", "01ARZ3NDEKTSV4RRFFQ69G5FAV").IsULID(),
 
+	// Network names and addresses.
 	validation.String("host", "api.example.com").IsHostname(),
 	validation.String("network", "192.0.2.0/24").IsCIDR(),
 	validation.String("device", "00:11:22:33:44:55").IsMAC(),
 
+	// Phone numbers and URL-safe encoding.
 	validation.String("phone", "+14155552671").IsE164(),
 	validation.String("token", "__8").IsBase64URL(),
 
+	// Character restrictions.
 	validation.String("name", "Ada").IsAlpha(),
 	validation.String("sku", "A123").IsAlphanumeric(),
 	validation.String("pin", "012345").IsDigits(),
 	validation.String("key", "header_name").IsASCII(),
 
+	// Unicode casing and text.
 	validation.String("slug", "café").IsLowercase(),
 	validation.String("code", "ÉCOLE").IsUppercase(),
 	validation.String("title", "こんにちは").IsUTF8(),

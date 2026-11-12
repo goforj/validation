@@ -33,10 +33,15 @@ Requires Go 1.24 or newer.
 go get github.com/goforj/validation@v0.2.0
 ```
 
-The complete [registration program](examples/quickstart/main.go) defines the Registration model and imports the library:
+Validate a decoded registration request. The [complete program](examples/quickstart/main.go) includes the request model and sample input:
 
 ```go
 {{QUICKSTART}}```
+
+The example supplies invalid input so you can inspect field messages and stable issue codes:
+
+```go
+{{QUICKSTART_ERRORS}}```
 
 ## How it works
 
