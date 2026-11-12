@@ -33,10 +33,25 @@ Requires Go 1.24 or newer.
 go get github.com/goforj/validation@v0.2.0
 ```
 
-Validate a decoded registration request. The [complete program](examples/quickstart/main.go) includes the request model and sample input:
+Pass field names and values into typed chains, then validate them together:
 
 ```go
 err := validation.Validate(
+	validation.String("name", "Ada").Required().Min(2),
+	validation.String("email", "ada@example.com").Required().IsEmail(),
+	validation.Number("age", 36).Min(18),
+)
+
+fmt.Println(err)
+// <nil>
+```
+
+## Validating a registration
+
+For a fuller request, add password confirmation, conditional requirements, and custom messages. The [complete program](examples/quickstart/main.go) includes the request model and sample input:
+
+```go
+registrationErr := validation.Validate(
 	// Identity and contact details.
 	validation.String("name", req.Name).Required().Min(2).Max(100),
 	validation.String("email", req.Email).Required().IsEmail().
@@ -58,11 +73,11 @@ err := validation.Validate(
 )
 ```
 
-The example supplies invalid input so you can inspect field messages and stable issue codes:
+This request contains invalid input. Inspect a field's message or iterate over the issue paths and stable codes:
 
 ```go
 var failures *validation.Errors
-if errors.As(err, &failures) {
+if errors.As(registrationErr, &failures) {
 	fmt.Println(failures.First("email"))
 	// Enter a valid email address.
 
@@ -131,6 +146,17 @@ String starts a deferred chain for a borrowed application value.
 
 ```go
 err := validation.Validate(
+	validation.String("name", "Ada").Required().Min(2),
+	validation.String("email", "ada@example.com").Required().IsEmail(),
+	validation.Number("age", 36).Min(18),
+)
+
+fmt.Println(err)
+// <nil>
+```
+
+```go
+registrationErr := validation.Validate(
 	// Identity and contact details.
 	validation.String("name", req.Name).Required().Min(2).Max(100),
 	validation.String("email", req.Email).Required().IsEmail().
@@ -154,7 +180,7 @@ err := validation.Validate(
 
 ```go
 var failures *validation.Errors
-if errors.As(err, &failures) {
+if errors.As(registrationErr, &failures) {
 	fmt.Println(failures.First("email"))
 	// Enter a valid email address.
 

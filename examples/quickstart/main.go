@@ -21,6 +21,17 @@ type Registration struct {
 
 // main demonstrates grouped registration rules and useful errors for invalid input.
 func main() {
+	// snippet:quickstart
+	err := validation.Validate(
+		validation.String("name", "Ada").Required().Min(2),
+		validation.String("email", "ada@example.com").Required().IsEmail(),
+		validation.Number("age", 36).Min(18),
+	)
+
+	fmt.Println(err)
+	// <nil>
+	// endsnippet:quickstart
+
 	req := Registration{
 		Name:                 "Ada",
 		Email:                "not-an-email",
@@ -32,8 +43,8 @@ func main() {
 		Terms:                false,
 	}
 
-	// snippet:quickstart
-	err := validation.Validate(
+	// snippet:registration
+	registrationErr := validation.Validate(
 		// Identity and contact details.
 		validation.String("name", req.Name).Required().Min(2).Max(100),
 		validation.String("email", req.Email).Required().IsEmail().
@@ -53,11 +64,11 @@ func main() {
 		validation.Number("age", req.Age).Min(18),
 		validation.Bool("terms", req.Terms).Accepted(),
 	)
-	// endsnippet:quickstart
+	// endsnippet:registration
 
 	// snippet:quickstart_errors
 	var failures *validation.Errors
-	if errors.As(err, &failures) {
+	if errors.As(registrationErr, &failures) {
 		fmt.Println(failures.First("email"))
 		// Enter a valid email address.
 
@@ -73,6 +84,7 @@ func main() {
 }
 
 // Output:
+// <nil>
 // Enter a valid email address.
 // email email
 // password_confirmation equal

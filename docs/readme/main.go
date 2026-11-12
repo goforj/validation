@@ -23,7 +23,7 @@ type section struct {
 
 // sections curates consumer operations rather than enumerating implementation plumbing.
 var sections = []section{
-	{"Values", []string{"String", "Number", "Bool", "Validate"}, "quickstart", []string{"quickstart", "quickstart_errors"}, ""},
+	{"Values", []string{"String", "Number", "Bool", "Validate"}, "quickstart", []string{"quickstart", "registration", "quickstart_errors"}, ""},
 	{"Formats", []string{"IsEmail", "IsURL", "IsUUID", "IsUUIDv4", "IsUUIDv7", "IsIP", "IsIPv4", "IsIPv6", "IsJSON", "IsBase64"}, "formats", []string{"formats"}, ""},
 	{"Conditions", []string{"When"}, "patch", []string{"patch"}, ""},
 	{"Collections", []string{"Group", "Slice", "Each"}, "nested", []string{"nested"}, ""},
@@ -76,7 +76,7 @@ func render(root string, entries []section) (string, error) {
 	lastGroup := ""
 	seen := make(map[string]bool)
 	programs := make(map[string]bool)
-	quickstart, quickstartErrors := "", ""
+	quickstart, registration, quickstartErrors := "", "", ""
 	for _, entry := range entries {
 		path := "examples/" + entry.program + "/main.go"
 		source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
@@ -141,7 +141,10 @@ func render(root string, entries []section) (string, error) {
 		if entry.program == "quickstart" {
 			quickstart = blocks[0]
 			if len(blocks) > 1 {
-				quickstartErrors = blocks[1]
+				registration = blocks[1]
+			}
+			if len(blocks) > 2 {
+				quickstartErrors = blocks[2]
 			}
 		}
 	}
@@ -150,7 +153,8 @@ func render(root string, entries []section) (string, error) {
 		return "", err
 	}
 	replacements := []struct{ key, value string }{
-		{"{{QUICKSTART}}", quickstart}, {"{{QUICKSTART_ERRORS}}", quickstartErrors},
+		{"{{QUICKSTART}}", quickstart}, {"{{REGISTRATION}}", registration},
+		{"{{QUICKSTART_ERRORS}}", quickstartErrors},
 		{"{{INDEX}}", index.String()},
 		{"{{EXAMPLES}}", examples.String()}, {"{{SOURCES}}", strings.Join(sources, " · ") + "\n"},
 		{"{{CURRENCIES}}", currencies},
